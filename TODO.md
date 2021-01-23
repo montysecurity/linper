@@ -18,5 +18,7 @@
 - Add /etc/rc.local startup persistence
 - Finish adding GTFOBins
 - Add remove/cleanup function
-- Add pwsh, create new user, make SSH key-pair
+- Add pwsh
+- Add create new user option
+- Add make SSH key-pair option
 - ~~Add stealth mode~~
