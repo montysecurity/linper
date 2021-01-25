@@ -17,9 +17,9 @@
 - Automate web server poison attack (after fixing PHP)
 - Add /etc/rc.local startup persistence
 - Finish adding GTFOBins
-- Add remove/cleanup function
 - Add pwsh
 - Add create new user option
 - Add make SSH key-pair option
 - Add /etc/skel/ backdoor
+- ~~Add remove/cleanup function~~
 - ~~Add stealth mode~~
