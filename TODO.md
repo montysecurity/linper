@@ -21,4 +21,5 @@
 - Add pwsh
 - Add create new user option
 - Add make SSH key-pair option
+- Add /etc/skel/ backdoor
 - ~~Add stealth mode~~
