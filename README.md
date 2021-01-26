@@ -65,12 +65,13 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 ##### caveat
 
 1. If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bash\_aliases because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
+
 ### cleaning
 
 1. To remove shells from the bashrc (current user's and /etc/skel), it simply greps out any lines with the given RHOST and creates a temp file which is then used to replace the respective file
 
-2. To remove shells from crontab, it attempts to grep out any lines with the given RHOST from `crontab -l`, then greps for any remaining "[a-zA-Z0-9]" characters and pipes that to crontab. If the install fails, it assumes there are no other cron jobs so it runs `crontab -r`
+2. To remove shells from crontab, it attempts to grep out any lines with the given RHOST from `crontab -l`, then greps for any remaining `[a-zA-Z0-9]` characters and pipes that to crontab. If the install fails, it assumes there are no other cron jobs so it runs `crontab -r`
 
-3. To remove reverse shells from systemctl service files, it looks for the shell script with the given RHOST in it and then looks for the name of said file in a .service file and removes both. This particular method of cleaning may only be useful of cleaning reverse shells installed by this program becuase it is based on the specific way this program utilizes systemctl to install backdoors
+3. To remove reverse shells from systemctl service files, it looks for the any file with the given RHOST in it and then looks for the name of said file in any other file and removes both
 
-4. To remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with "!#/bin/sh -e" and end with "exit 0")
+4. To remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with `!#/bin/sh -e` and end with `exit 0`)
