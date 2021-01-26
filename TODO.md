@@ -14,6 +14,7 @@
 
 ## Enhancements
 
+- Expand clean option to remove all any other tampers
 - Automate web server poison attack (after fixing PHP)
 - Add /etc/rc.local startup persistence
 - Finish adding GTFOBins
