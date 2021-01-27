@@ -97,7 +97,7 @@ how often a reverse shell installed using each door will callback
 how often the `sudo` alias will attempt to exfil passwords
 
 - every time `sudo` is executed by the account linper was ran as
-- make sure to have a web server running on port 80 on the IP you provided as the `-i, --rhost`
+- make sure to have a web server running on port 443 on the IP you provided as the `-i, --rhost`
 
 #### how it works
 
@@ -111,6 +111,6 @@ after it is installed and once `sudo` is executed, the alias will:
 5. puts the contents of the variable in the file from step 3
 6. sorts and deduplicates aforementioned file
 7. base64 encodes the contents of the file and stores it as a variable
-8. uses curl to exfiltrate the base64 as a GET parameter to https://$RHOST/
+8. uses `curl` to exfiltrate the base64 as a GET parameter to https://$RHOST/
 9. runs `exit` with the actual `sudo` program to start the sudo session timer
 10. runs the supplied input of the original `sudo` command (not the password, but the program and arguments) with the actual `sudo` binary 
