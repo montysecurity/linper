@@ -44,7 +44,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 ### installing
 
-1. Enumerating methods and doors - the script enumerates binaries that can be used for executing a reverse shell (methods, e.g. bash), and then for each of those, it enumerates ways to make them persist (doors, e.g. crontab). If dryrun is not set, every possible method and door pair is set
+1. Enumerating methods and doors - the script enumerates binaries that can be used for executing a reverse shell (methods, e.g. bash), and then for each of those, it enumerates ways to make them persist (doors, e.g. crontab). If dryrun is not set, every possible method and door pair is set (the doors, and how often they execute, are explained in greater detail below)
 
 2. Sudo hijack attack - Enumerates whether or not the current user can sudo, if so, and if dryrun not set, it installs a function in their bashrc to "hijack that binary". Thanks to [this Null Byte article](https://null-byte.wonderhowto.com/how-to/steal-ubuntu-macos-sudo-passwords-without-any-cracking-0194190/) for the idea.
 
@@ -77,3 +77,11 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 3. To remove reverse shells from systemctl service files, it looks for the any file with the given RHOST in it and then looks for the name of said file in any other file and removes both
 
 4. To remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with `!#/bin/sh -e` and end with `exit 0`)
+
+## doors execution frequency
+
+- bashrc: every time bash initializes for the user it was installed with (e.g. interactive shell, or running "/bin/bash") 
+- crontab: every minute (this can be changed by altering the $CRON variable at the top of the script) (see TODO.md)
+- systemctl: at system startup
+- /etc/rc.local: at system startup
+- /etc/skel/.bashrc: after a new user is created, and then any time that user initializes bash
