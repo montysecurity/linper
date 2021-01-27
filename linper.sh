@@ -219,7 +219,7 @@ enum_doors() {
 
 sudo_hijack_attack() {
 
-	if $(cat /etc/group | grep sudo | grep -qi $(whoami));
+	if $(cat /etc/group | grep sudo | grep -qi $(whoami)) && $(which curl | grep -qi curl);
 	then
 		if [ "$DRYRUN" -eq 0 ];
 		then
