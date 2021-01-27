@@ -60,7 +60,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 2. Disables the ability to append methods to the bashrc - because if a connection fails it is noisy and prints to the screen
 
-3. Creates a `crontab` function in \~/.bash\_aliases to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells.
+3. ~~Creates a `crontab` function in \~/.bash\_aliases to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells.~~ (I thought I built this but apparently not, I will be doing so)
 
 ##### caveat
 

@@ -2,6 +2,7 @@
 
 ## Fixes
 
+- Build crontab bash alias
 - Fix Perl
 - Fix Node
 - ~~Fix Python (how to get '"' around RHOST and SHELL?)~~
@@ -16,11 +17,11 @@
 
 - Expand clean option to remove any other tampers
 - Automate web server poison attack (after fixing PHP)
-- Add /etc/rc.local startup persistence
 - Finish adding GTFOBins
 - Add pwsh
 - Add create new user option
 - Add make SSH key-pair option
-- Add /etc/skel/ backdoor
+- ~~Add /etc/rc.local startup persistence~~
+- ~~Add /etc/skel/ backdoor~~
 - ~~Add remove/cleanup function~~
 - ~~Add stealth mode~~
