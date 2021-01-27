@@ -60,11 +60,13 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 2. Disables the ability to append methods to the bashrc - because if a connection fails it is noisy and prints to the screen
 
-3. ~~Creates a `crontab` function in \~/.bash\_aliases to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells.~~ (I thought I built this but apparently not, I will be doing so)
+3. Creates a `crontab` function in \~/.bashrc to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells
 
-##### caveat
+##### caveats
 
-1. If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bash\_aliases because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
+1. If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bashrc because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
+
+2. If you use the clean function after installing in stealth mode, it will break the `crontab` function in the bashrc, currently working on a way to completely remove the function so it does not print any errors to screen
 
 ### cleaning
 

