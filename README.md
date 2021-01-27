@@ -78,10 +78,39 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 4. To remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with `!#/bin/sh -e` and end with `exit 0`)
 
-## doors execution frequency
+## execution frequency
+
+this will explain how often different programs installed by the tool will execute
+
+### doors
+
+how often a reverse shell installed using each door will callback
 
 - bashrc: every time bash initializes for the user it was installed with (e.g. interactive shell, or running "/bin/bash") 
 - crontab: every minute (this can be changed by altering the $CRON variable at the top of the script) (see TODO.md)
 - systemctl: at system startup
 - /etc/rc.local: at system startup
 - /etc/skel/.bashrc: after a new user is created, and then any time that user initializes bash
+
+### sudo hijack attack
+
+how often the `sudo` alias will attempt to exfil passwords
+
+- every time `sudo` is executed by the account linper was ran as
+- make sure to have a web server running on port 80 on the IP you provided as the `-i, --rhost`
+
+#### how it works
+
+1. when linper is executed it puts a `sudo` function in the bashrc of the current user
+
+after it is installed and once `sudo` is executed, the alias will:
+
+2. takes note of where the actual `sudo` program is located on the system
+3. determines where to create a file to store exfiltrated passwords
+4. creates a fake `sudo` prompt and stores the input (password) as a variable
+5. puts the contents of the variable in the file from step 3
+6. sorts and deduplicates aforementioned file
+7. base64 encodes the contents of the file and stores it as a variable
+8. uses curl to exfiltrate the base64 as a GET parameter to https://$RHOST/
+9. runs `exit` with the actual `sudo` program to start the sudo session timer
+10. runs the supplied input of the original `sudo` command (not the password, but the program and arguments) with the actual `sudo` binary 

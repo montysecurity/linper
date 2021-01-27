@@ -15,6 +15,9 @@
 
 ## Enhancements
 
+- expand sudo hijack attack to do the following
+	- send the data as a POST parameter (to take advantage of HTTPS)
+	- write sudo function to <b>all</b> writable bashrc files
 - build `--cron` argument to supply custom schedules
 - Expand clean option to remove any other tampers
 - Automate web server poison attack (after fixing PHP)

