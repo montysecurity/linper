@@ -8,6 +8,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 - TODO.md - planned fixes & enhancements
 - linper.sh - execute me
 - gtfobins/ - directory containing (possibly modified) snippets of code from [gtfobins](https://gtfobins.github.io/) as I am working on integrating them into the overall script
+- powershell/ - placeholder for the eventual winper
 
 ## usage
 
@@ -35,10 +36,9 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 `bash linper.sh -i 10.10.10.10 -c`
 
-#### caveats
+#### caveat
 
 - This functionality is designed to remove reverse shells installed using this tool however since this tool uses common/well-known techniques, it may also be used to remove unwanted reverse shells if you know the C2 domain/IP
-- The cleaning mechanism does not remove any bash aliases from the `-s,--stealth-mode` options (though that is being planned, see TODO.md)
 
 ## methodology
 
@@ -66,8 +66,6 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 1. If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bashrc because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
 
-2. If you use the clean function after installing in stealth mode, it will break the `crontab` function in the bashrc, currently working on a way to completely remove the function so it does not print any errors to screen
-
 ### cleaning
 
 1. To remove shells from the bashrc (current user's and /etc/skel), it simply greps out any lines with the given RHOST and creates a temp file which is then used to replace the respective file
@@ -77,6 +75,8 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 3. To remove reverse shells from systemctl service files, it looks for the any file with the given RHOST in it and then looks for the name of said file in any other file and removes both
 
 4. To remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with `!#/bin/sh -e` and end with `exit 0`)
+
+5. To remove the `crontab` function installed by `-s, --stealt-mode`, it looks for the provided RHOST in ~/.bashrc and the string "function crontab". If both return true then it uses sed amd grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file 
 
 ## execution frequency
 

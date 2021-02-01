@@ -19,12 +19,12 @@
 	- send the data as a POST parameter (to take advantage of HTTPS)
 	- write sudo function to <b>all</b> writable bashrc files
 - build `--cron` argument to supply custom schedules
-- Expand clean option to remove any other tampers
 - Automate web server poison attack (after fixing PHP)
 - Finish adding GTFOBins
 - Add pwsh
 - Add create new user option
 - Add make SSH key-pair option
+- ~~Expand clean option to remove any other tampers~~
 - ~~Add /etc/rc.local startup persistence~~
 - ~~Add /etc/skel/ backdoor~~
 - ~~Add remove/cleanup function~~
