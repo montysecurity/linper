@@ -32,7 +32,7 @@ HELP="
 \e[33m-p, --rport\e[0m port to call back to\n
 \e[33m--cron\e[0m cron schedule for any reverse shells executed by crontab (default: every minute)\n
 \e[33m-c, --clean\e[0m removes any reverse shells installed by this program for the given RHOST\n
-\e[33m-s, --stealth-mode\e[0m various trivial modifications in an attempt to hide the backdoors from humans - see documentation"
+\e[33m-s, --stealth-mode\e[0m various trivial modifications to the install function in an attempt to hide the backdoors from humans - see documentation"
 
 while test $# -gt 0;
 do

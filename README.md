@@ -63,7 +63,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 #### stealth mode
 
-`-s, --stealth-mode various trivial modifications in an attempt to hide the backdoors from humans`
+`-s, --stealth-mode various trivial modifications to the install function in an attempt to hide the backdoors from humans`
 
 1. Makes the files related to installing services hidden by prepending a "."
 
