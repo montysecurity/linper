@@ -14,6 +14,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 - enumerate programs that can be used to execute a reverse shells and ways to make the persist a reboot
 - automatically install reverse shells with all the required syntax, redirection, and pipes to minimize printing errors to screen or interrupting normal functions and processes
+- supply custom crontab schedules for reverse shells
 - look through /etc/shadow for non-system accounts
 - support for a stealth mode and the ability to clean up after itself
 - place a function in ~/.bashrc to intercept and exfil sudo passwords
