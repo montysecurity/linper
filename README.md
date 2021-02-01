@@ -10,6 +10,14 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 - gtfobins/ - directory containing (possibly modified) snippets of code from [gtfobins](https://gtfobins.github.io/) as I am working on integrating them into the overall script
 - powershell/ - placeholder for the eventual winper
 
+## features
+
+- enumerate programs that can be used to execute a reverse shells and ways to make the persist a reboot
+- automatically install reverse shells with all the required syntax, redirection, and pipes to minimize printing errors to screen or interrupting normal functions and processes
+- look through /etc/shadow for non-system accounts
+- support for a stealth mode and the ability to clean up after itself
+- place a function in ~/.bashrc to intercept and exfil sudo passwords
+
 ## usage
 
 ### enumerating binaries for persistence
@@ -62,9 +70,9 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 3. Creates a `crontab` function in \~/.bashrc to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells
 
-##### caveats
+##### caveat
 
-1. If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bashrc because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
+If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bashrc because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
 
 ### cleaning
 
@@ -86,11 +94,11 @@ this will explain how often different programs installed by the tool will execut
 
 how often a reverse shell installed using each door will callback
 
-- bashrc: every time bash initializes for the user it was installed with (e.g. interactive shell, or running "/bin/bash") 
-- crontab: every minute (this can be changed by altering the $CRON variable at the top of the script) (see TODO.md)
-- systemctl: at system startup
-- /etc/rc.local: at system startup
-- /etc/skel/.bashrc: after a new user is created, and then any time that user initializes bash
+- bashrc, every time bash initializes for the user it was installed with (e.g. interactive shell, or running "/bin/bash") 
+- crontab, every minute (this can be changed by altering the $CRON variable at the top of the script) (see TODO.md)
+- systemctl, at system startup
+- /etc/rc.local, at system startup
+- /etc/skel/.bashrc, after a new user is created, and then any time that user initializes bash
 
 ### sudo hijack attack
 
