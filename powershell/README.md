@@ -10,4 +10,6 @@ Just some notes for the eventual winper built with powershell.
 
 [powershell profiles](https://www.red-gate.com/simple-talk/sysadmin/powershell/persistent-powershell-the-powershell-profile/)
 
+[adding users](https://ethicalhackingguru.com/how-to-exploit-ms17-010-eternal-blue-without-metasploit/)
+
 nishang

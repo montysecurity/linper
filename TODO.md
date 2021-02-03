@@ -2,7 +2,7 @@
 
 ## Fixes
 
-- Fix Node
+- ~~Fix Node~~
 - ~~Fix Perl~~
 - ~~Build crontab bash alias~~
 - ~~Fix Python (how to get '"' around RHOST and SHELL?)~~
@@ -20,9 +20,9 @@
 	- write sudo function to <b>all</b> writable bashrc files
 - Automate web server poison attack (after fixing PHP)
 - Finish adding GTFOBins
-- Add pwsh
 - Add create new user option
 - Add make SSH key-pair option
+- ~~Add pwsh~~
 - ~~build `--cron` argument to supply custom schedules~~
 - ~~Expand clean option to remove any other tampers~~
 - ~~Add /etc/rc.local startup persistence~~
