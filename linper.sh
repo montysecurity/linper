@@ -382,8 +382,8 @@ main() {
 	fi
 	enum_methods
 	sudo_hijack_attack $PASSWDFILE
-	#webserver_poison_attack
-	#shadow
+	webserver_poison_attack
+	shadow
 
 }
 
