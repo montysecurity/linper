@@ -7,7 +7,6 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 - README.md - or not
 - TODO.md - planned fixes & enhancements
 - linper.sh - execute me
-- gtfobins/ - directory containing (possibly modified) snippets of code from [gtfobins](https://gtfobins.github.io/) as I am working on integrating them into the overall script
 - powershell/ - placeholder for the eventual winper
 
 ## features
@@ -18,6 +17,12 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 - look through /etc/shadow for non-system accounts
 - support for a stealth mode and the ability to clean up after itself
 - place a function in ~/.bashrc to intercept and exfil sudo passwords
+
+## credit
+
+huge shoutout to the maintainers and contributers of [GTFOBins](https://gtfobins.github.io/) as their great resource laid the groundwork for much of this tool
+
+also, thanks to Null Byte and [this article](https://null-byte.wonderhowto.com/how-to/steal-ubuntu-macos-sudo-passwords-without-any-cracking-0194190/) for the idea and some of the code behind the _Sudo Hijack Attack_ as implemented in this tool 
 
 ## usage
 
@@ -55,7 +60,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 1. Enumerating methods and doors - the script enumerates binaries that can be used for executing a reverse shell (methods, e.g. bash), and then for each of those, it enumerates ways to make them persist (doors, e.g. crontab). If dryrun is not set, every possible method and door pair is installed <b>(the doors, and how often they execute, are explained in greater detail below)</b>
 
-2. Sudo hijack attack - Enumerates whether or not the current user can sudo, if so, and if dryrun not set, it installs a function in their bashrc to "hijack that binary". Thanks to [this Null Byte article](https://null-byte.wonderhowto.com/how-to/steal-ubuntu-macos-sudo-passwords-without-any-cracking-0194190/) for the idea.
+2. Sudo hijack attack - Enumerates whether or not the current user can sudo, if so, and if dryrun not set, it installs a function in their bashrc to "hijack" that binary
 
 3. Web Server Poison Attack - Enumerates whether or not the webserver's directories are writable (this feature will be expanded, see TODO.md)
 

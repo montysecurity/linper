@@ -15,13 +15,8 @@
 
 ## Enhancements
 
-- expand sudo hijack attack to do the following
-	- send the data as a POST parameter (to take advantage of HTTPS)
-	- write sudo function to <b>all</b> writable bashrc files
 - Automate web server poison attack (after fixing PHP)
-- Finish adding GTFOBins
-- Add create new user option
-- Add make SSH key-pair option
+- ~~Finish adding GTFOBins~~
 - ~~Add pwsh~~
 - ~~build `--cron` argument to supply custom schedules~~
 - ~~Expand clean option to remove any other tampers~~
