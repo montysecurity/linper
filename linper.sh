@@ -299,7 +299,15 @@ cleanup() {
 	then
 		cat ~/.bashrc | sed '1,/function crontab/!d' | grep -v "function crontab" > $TMPCLEANBASHRC
 		cp $TMPCLEANBASHRC ~/.bashrc
-		echo -e "\e[92m[+]\e[0m Cleaned bashrc"
+		echo -e "\e[92m[+]\e[0m Removed crontab function from bashrc"
+	fi
+
+	# removed sudo hijack
+	if $(grep -qi $1 ~/.bashrc) && $(grep -qi "function sudo" ~/.bashrc) && $(grep -qi REALSUDO ~/.bashrc) && $(grep -qi PASSWDFILE ~/.bashrc);
+	then
+		cat ~/.bashrc | sed '1,/function sudo/!d' | grep -v "function sudo" > $TMPCLEANBASHRC
+		cp $TMPCLEANBASHRC ~/.bashrc
+		echo -e "\e[92m[+]\e[0m Removed sudo function from bashrc"
 	fi
 
 	# remove from bashrc
@@ -307,7 +315,7 @@ cleanup() {
 	then
 		grep --color=never -v $1 ~/.bashrc > $TMPCLEANBASHRC
 		cp $TMPCLEANBASHRC ~/.bashrc
-		echo -e "\e[92m[+]\e[0m Cleaned bashrc"
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from ~/.bashrc"
 	fi
 
 	# remove from crontab
@@ -315,14 +323,7 @@ cleanup() {
 	if $($CRONBINARY -l 2> /dev/null | grep -q $1);
 	then
 		$CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null 1>&2 && $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null | $CRONBINARY || $CRONBINARY -r
-		echo -e "\e[92m[+]\e[0m Cleaned crontab"
-	fi
-	
-	# remove --stealth-mode modifications
-	if $(grep -qi $1 ~/.bashrc) && $(grep -qi "function crontab" ~/.bashrc) && $(grep -qi REALBIN ~/.bashrc);
-	then
-		cat ~/.bashrc | sed '1,/function crontab/!d' | grep -v "function crontab" > $TMPCLEANBASHRC
-		cp $TMPCLEANBASHRC ~/.bashrc
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from crontab"
 	fi
 
 	# this removes both the .service and .sh files
@@ -346,7 +347,7 @@ cleanup() {
 
 	if [ "$CLEANSYSMSG" -eq 1 ];
 	then
-		echo -e "\e[92m[+]\e[0m Cleaned systemctl"
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from systemctl"
 	fi
 
 	# remove from /etc/skel/.bashrc and /etc/rc.local
@@ -358,14 +359,14 @@ cleanup() {
 		then
 			rm "/etc/rc.local"
 		fi
-		echo -e "\e[92m[+]\e[0m Cleaned /etc/rc.local"
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/rc.local"
 	fi
 
 	if $(cat /etc/skel/.bashrc 2> /dev/null | grep -q $1);
 	then
 		grep --color=never -v $1 /etc/skel/.bashrc > $TMPCLEANBASHRC
 		cp $TMPCLEANBASHRC /etc/skel/.bashrc
-		echo -e "\e[92m[+]\e[0m Cleaned /etc/skel/.bashrc"
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/skel/.bashrc"
 	fi
 	
 	# remove from webserver, need to finish the install part first
@@ -381,8 +382,8 @@ main() {
 	fi
 	enum_methods
 	sudo_hijack_attack $PASSWDFILE
-	webserver_poison_attack
-	shadow
+	#webserver_poison_attack
+	#shadow
 
 }
 

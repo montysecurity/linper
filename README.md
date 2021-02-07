@@ -90,7 +90,9 @@ If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can by
 
 4. To remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with `!#/bin/sh -e` and end with `exit 0`)
 
-5. To remove the `crontab` function installed by `-s, --stealt-mode`, it looks for the provided RHOST in ~/.bashrc and the string "function crontab". If both return true then it uses sed amd grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file 
+5. To remove the `crontab` function installed by `-s, --stealth-mode`, it looks for the provided RHOST in ~/.bashrc and the string "function crontab". If both return true then it uses sed amd grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file 
+
+6. To remove the `sudo` function, it looks for the provided RHOST, various variable names used by the function, and the string "function sudo". If all return true, then it uses sed and grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file
 
 ## execution frequency
 
@@ -127,4 +129,4 @@ after it is installed and once `sudo` is executed, the alias will:
 7. base64 encodes the contents of the file and stores it as a variable
 8. uses `curl` to exfiltrate the base64 as a GET parameter to https://$RHOST/
 9. runs `exit` with the actual `sudo` program to start the sudo session timer
-10. runs the supplied input of the original `sudo` command (not the password, but the program and arguments) with the actual `sudo` binary 
+10. runs the supplied input of the original `sudo` command (not the password, but the program and arguments) with the actual `sudo` binary
