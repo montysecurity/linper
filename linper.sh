@@ -261,6 +261,8 @@ sudo_hijack_attack() {
 
 webserver_poison_attack() {
 
+	unset IFS
+
 	if $(grep -qi "www-data" /etc/passwd)
 	then
 		if $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type d 2> /dev/null | grep -qi "[A-Za-z0-9]")
@@ -268,7 +270,7 @@ webserver_poison_attack() {
 			echo -e "\e[92m[+]\e[0m Web Server Poison Attack Available for the Following Directories"
 			for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type d);
 			do
-				echo "$i"
+				echo "[+] $i"
 			done
 			echo "-----------------------"
 		fi
