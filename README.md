@@ -103,7 +103,7 @@ this will explain how often different programs installed by the tool will execut
 how often a reverse shell installed using each door will callback
 
 - bashrc, every time bash initializes for the user it was installed with (e.g. interactive shell, or running "/bin/bash") 
-- crontab, every minute (this can be changed by altering the $CRON variable at the top of the script) (see TODO.md)
+- crontab, custom (defualt: every minute)
 - systemctl, at system startup
 - /etc/rc.local, at system startup
 - /etc/skel/.bashrc, after a new user is created, and then any time that user initializes bash
