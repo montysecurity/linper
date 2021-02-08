@@ -4,10 +4,11 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 ## files
 
+- powershell/ - placeholder for the eventual winper
+- CONTRIBUTE.md - notes on contributing to this project
 - README.md - or not
 - TODO.md - planned fixes & enhancements
 - linper.sh - execute me
-- powershell/ - placeholder for the eventual winper
 
 ## features
 
