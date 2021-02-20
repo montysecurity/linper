@@ -15,7 +15,9 @@
 
 ## Enhancements
 
-- Automate web server poison attack (after fixing PHP)
+- Add Lua, nmap
+- (Finish) web server poison attack ~~(after fixing PHP)~~
+- ~~Replace mktemp with string /dev/urandom~~
 - ~~Finish adding GTFOBins~~
 - ~~Add pwsh~~
 - ~~build `--cron` argument to supply custom schedules~~
