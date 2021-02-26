@@ -18,6 +18,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 - look through /etc/shadow for non-system accounts
 - support for a stealth mode and the ability to clean up after itself
 - place a function in ~/.bashrc to intercept and exfil sudo passwords
+- place php reverse shells in web server directories
 
 ## credit
 
@@ -131,3 +132,8 @@ after it is installed and once `sudo` is executed, the alias will:
 8. uses `curl` to exfiltrate the base64 as a GET parameter to https://$RHOST/
 9. runs `exit` with the actual `sudo` program to start the sudo session timer
 10. runs the supplied input of the original `sudo` command (not the password, but the program and arguments) with the actual `sudo` binary
+
+### web server hijack attack
+
+- uses /etc/passwd to find the web root
+- installs php reverse shells in all writable directories under web root
