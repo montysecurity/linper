@@ -245,7 +245,7 @@ webserver_poison_attack() {
 						METHOD=$(echo $s | awk -F ' , ' '{print $1}')
 						PAYLOAD=$(echo $s | awk -F ' , ' '{print $3}')
 
-						if $(echo $METHOD | grep -qi "^php$");
+						if $(echo $METHOD | grep -qi "php");
 						then	
 							unset IFS
 							RANDOMPHPFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
