@@ -4,6 +4,7 @@ linux persistence toolkit - enumerate, install, or remove persistence mechanisms
 
 ## files
 
+- countermeasures/ - ways to harden/monitor common persistence mechanisms
 - powershell/ - placeholder for the eventual winper
 - CONTRIBUTE.md - notes on contributing to this project
 - README.md - or not
