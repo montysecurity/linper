@@ -4,7 +4,7 @@ in an effort to teach myself linux hardening, this will document ways to detect/
 
 of course, this is not all-inclusive and there is always a way around defenses. always.
 
-## tripwire policies
+## tripwire policy
 
 ```
 #
