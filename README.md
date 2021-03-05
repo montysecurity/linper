@@ -59,6 +59,10 @@ also, thanks to Null Byte and [this article](https://null-byte.wonderhowto.com/h
 
 `bash linper.sh -e`
 
+### advanced usage
+
+run `bash linper.sh -h` to see all usage examples
+
 ## methodology
 
 ### installing

