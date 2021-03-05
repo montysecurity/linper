@@ -1,6 +1,6 @@
 # linper
 
-linux persistence toolkit - enumerate, install, or remove persistence mechanisms
+linux persistence toolkit
 
 ## files
 

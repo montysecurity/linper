@@ -36,7 +36,7 @@ TMPPIP3DIR=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-
 TMPRCLOCAL=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 TMPWEB=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
 
-INFO="automatically install multiple methods of persistence\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
+INFO="linux persistence toolkit\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
 
 HELP="\e[33m-h, --help\e[0m show this message
 \e[33m-d, --dryrun\e[0m dry run, do not install persistence, just enumerate relevant binaries
