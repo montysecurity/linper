@@ -53,9 +53,11 @@ also, thanks to Null Byte and [this article](https://null-byte.wonderhowto.com/h
 
 `bash linper.sh -i 10.10.10.10 -c`
 
-#### caveat
+### emumerate defensive measures
 
-- This functionality is designed to remove reverse shells installed using this tool however since this tool uses common/well-known techniques, it may also be used to remove unwanted reverse shells if you know the C2 domain/IP
+`bash linper.sh --enum-defenses`
+
+`bash linper.sh -e`
 
 ## methodology
 
@@ -71,17 +73,13 @@ also, thanks to Null Byte and [this article](https://null-byte.wonderhowto.com/h
 
 #### stealth mode
 
-`-s, --stealth-mode various trivial modifications to the install function in an attempt to hide the backdoors from humans`
+`-s, --stealth-mode various trivial modifications in an attempt to hide the backdoors from humans`
 
 1. Makes the files related to installing services hidden by prepending a "."
 
 2. Disables the ability to append methods to the bashrc - because if a connection fails it is noisy and prints to the screen
 
 3. Creates a `crontab` function in \~/.bashrc to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells
-
-##### caveat
-
-If you run `-s, --stealth-mode` as a sudo enabled user, be aware that you can bypass the `crontab` function installed in \~/.bashrc because aliases are not preserved when running `sudo`, nor does `sudo` call the `root` user aliases. (This does not interfere with the sudo hijack attack)
 
 ### cleaning
 
@@ -136,5 +134,5 @@ after it is installed and once `sudo` is executed, the alias will:
 
 ### web server hijack attack
 
-- uses /etc/passwd to find the web root
-- installs php reverse shells in all writable directories under web root
+1. uses /etc/passwd to find the web root
+2. installs php reverse shells in all writable directories under web root

@@ -16,6 +16,7 @@
 ## Enhancements
 
 - Add Lua, nmap
+- ~~Add `-e, --enum-defenses`~~
 - ~~(Finish) web server poison attack (after fixing PHP)~~
 - ~~Replace mktemp with string /dev/urandom~~
 - ~~Finish adding GTFOBins~~

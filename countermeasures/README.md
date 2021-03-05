@@ -16,12 +16,15 @@ of course, this is not all-inclusive and there is always a way around defenses. 
 )
 {
         #
-        # Author: montysecurity
+        # tripwire policy for monitoring common persistence avenues
+	# compatible with default tripwire policy
+	#
+	# author: montysecurity
         # montysecurity@protonmail.com
         # twitter.com/_montysecurity
         #
-        # Pulled from the research I am doing to build linper
-        # Will be updated as linper grows; not all-inclusive
+        # pulled from the research I am doing to build linper
+        # will be updated as linper grows; not all-inclusive
         #
         # https://github.com/montysecurity/linper/
         #
