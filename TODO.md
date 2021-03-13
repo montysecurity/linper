@@ -16,7 +16,7 @@
 ## Enhancements
 
 - Add Lua, nmap
-- what to do when `strings` is not installed (apt install binutils)
+- ~~what to do when `strings` is not installed (apt install binutils)~~
 - ~~Add `-e, --enum-defenses`~~
 - ~~(Finish) web server poison attack (after fixing PHP)~~
 - ~~Replace mktemp with string /dev/urandom~~

