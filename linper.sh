@@ -357,7 +357,7 @@ shadow() {
     then
 	if [ "$DRYRUN" -eq 0 ];
 	then
-	    echo -e "\e[92m[+]\e[0m Users with passwords from the shadow file"
+	    echo -e "\e[92m[+]\e[0m Accounts with Passwords from /etc/shadow"
 	    egrep -v "\*|\!" /etc/shadow
 	else
 	    echo -e "\e[92m[+]\e[0m You Can Read /etc/shadow"
