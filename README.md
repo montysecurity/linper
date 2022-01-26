@@ -63,7 +63,7 @@ lastly, thank you to [PayloadAllTheThings](https://github.com/swisskyrepo/Payloa
 
 ### advanced usage
 
-run `bash linper.sh -h` to see all usage examples
+run `bash linper.sh --examples` to see all usage examples
 
 ## methodology
 
@@ -97,7 +97,7 @@ run `bash linper.sh -h` to see all usage examples
 
 4. to remove shells from /etc/rc.local, it simply greps out any reference to the given RHOST and if the remaining file is two lines long it assumes there was nothing else to execute in rc.local so it removes the file (it checks for two lines because, at minimum, it must start with `!#/bin/sh -e` and end with `exit 0`)
 
-5. to remove the `crontab` function installed by `-s, --stealth-mode`, it looks for the provided RHOST in ~/.bashrc and the string "function crontab". If both return true then it uses sed amd grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file 
+5. to remove the `crontab` function installed by `-s, --stealth-mode`, it looks for the provided RHOST in ~/.bashrc and the string "function crontab". If both return true then it uses sed and grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file 
 
 6. to remove the `sudo` function, it looks for the provided RHOST, various variable names used by the function, and the string "function sudo". If all return true, then it uses sed and grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file
 
