@@ -2,22 +2,15 @@
 
 CLEAN=0
 CLEANSYSMSG=0
+CRON="* * * * *"
 DISABLEBASHRC=0
 DRYRUN=0
 ENUM_DEF=0
-STEALTHMODE=0
 VALIDSYNTAX=0
 LIMIT=0
+STEALTHMODE=0
 COUNTER=0
-
-if $(which srm | grep -qi srm);
-then
-    REMOVALTOOL="srm"
-else
-    REMOVALTOOL="rm"
-fi
-
-CRON="* * * * *"
+REMOVALTOOL=$(which srm) || REMOVALTOOL=$(which rm)
 RANDOMPHPFILE=$(echo $(grep --color=never -aoE [a-zA-Z0-9] /dev/urandom | head -n 10 | tr -d '\n').php)
 RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
