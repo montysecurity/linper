@@ -520,10 +520,6 @@ main() {
 	shadow
 	enum_methods
 	webserver_poison_attack
-
-	echo -e "\e[92m[+]\e[0m Removing temporary files"
-	remove_tmp_files
-	echo -e "\e[92m[+]\e[0m Done"
 	exit 0
 
 }
