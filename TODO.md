@@ -15,7 +15,7 @@
 
 ## Enhancements
 
-- Add Lua, nmap
+- ~~Add Lua, nmap~~ (did not add nmap, just Lua)
 - ~~what to do when `strings` is not installed (apt install binutils)~~
 - ~~Add `-e, --enum-defenses`~~
 - ~~(Finish) web server poison attack (after fixing PHP)~~
