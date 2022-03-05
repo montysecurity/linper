@@ -87,6 +87,8 @@ run `bash linper.sh --examples` to see all usage examples
 
 3. creates a `crontab` function in \~/.bashrc to override the `-r` and `-l` flags. `-r` is changed to remove all crontab entries <u>except</u> your reverse shells. `-l` is changed to list all the existing cron jobs <u>except</u> your reverse shells
 
+4. converts ipv4 to decimal format
+
 ### cleaning
 
 1. to remove shells from the bashrc (current user's and /etc/skel), it simply greps out any lines with the given RHOST and creates a temp file which is then used to replace the respective file
