@@ -15,6 +15,8 @@
 
 ## Enhancements
 
+- Add banners to crontabs for stealth
+- Add other methods (add user, backdoor apt, etc.)
 - ~~Add timestomping~~
 - ~~Add Lua, nmap~~ (did not add nmap, just Lua)
 - ~~what to do when `strings` is not installed (apt install binutils)~~
