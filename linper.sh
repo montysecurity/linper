@@ -647,7 +647,7 @@ main() {
 	stealth_modifications
     fi
     set_methods
-    #enum_methods
+    enum_methods
     webserver_poison_attack
     remove_writable
     exit 0
